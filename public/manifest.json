@@ -1,0 +1,17 @@
+{
+  "name": "植物管家",
+  "short_name": "植物管家",
+  "description": "你的私人植物 AI 助手",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#16a34a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
