@@ -81,9 +81,7 @@ function isToday(date: Date): boolean {
 }
 
 export default function CalendarPage() {
-  const plants = usePlantStore((s) => s.plants);
-  const waterPlant = usePlantStore((s) => s.waterPlant);
-  const fertilizePlant = usePlantStore((s) => s.fertilizePlant);
+  const { plants, waterPlant, fertilizePlant } = usePlantStore();
 
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());

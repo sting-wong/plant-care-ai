@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState, Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { nanoid } from "nanoid";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Stethoscope, Leaf, CalendarDays } from "lucide-react";
 import { usePlantStore } from "@/lib/store";
-import { ChatMessage, TypingIndicator } from "@/components/chat-message";
+import { ChatMessage } from "@/components/chat-message";
 import { ChatInput } from "@/components/chat-input";
 import { DiagnosisCard } from "@/components/diagnosis-card";
 import { compressImage } from "@/lib/utils";
@@ -22,22 +22,40 @@ function getRandomLoadingMessage() {
   return LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)];
 }
 
+// Map confidence 0-100 to severity label + color
+function confidenceToSeverity(confidence: number): { label: string; color: string; bg: string } {
+  if (confidence >= 80) return { label: "状态良好", color: "#4CAF7A", bg: "rgba(76,175,122,0.12)" };
+  if (confidence >= 50) return { label: "需要关注", color: "#FBBF24", bg: "rgba(251,191,36,0.12)" };
+  return { label: "需要紧急处理", color: "#F87171", bg: "rgba(248,113,113,0.12)" };
+}
+
 export default function DiagnosisPage() {
+  return (
+    <Suspense fallback={<div className="glass-bg min-h-dvh flex items-center justify-center"><Loader2 className="w-6 h-6 text-[#2D7D46] animate-spin" /></div>}>
+      <DiagnosisPageInner />
+    </Suspense>
+  );
+}
+
+function DiagnosisPageInner() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const sessionId = params.id as string;
+  const plantId = searchParams.get("plantId");
 
-  const session = usePlantStore((s) => s.sessions[sessionId]);
-  const setDiagnosis = usePlantStore((s) => s.setDiagnosis);
-  const addMessage = usePlantStore((s) => s.addMessage);
+  const { sessions, plants, setDiagnosis, addMessage, updatePlantDiagnosis, addGrowthRecord } = usePlantStore();
+  const session = sessions[sessionId];
+  const plant = plantId ? plants[plantId] : undefined;
 
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0]);
+  const [saved, setSaved] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasDiagnosed = useRef(false);
 
-  // 自动滚动到底部
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -46,7 +64,17 @@ export default function DiagnosisPage() {
     scrollToBottom();
   }, [session?.messages, isTyping]);
 
-  // 首次加载时自动发起诊断
+  useEffect(() => {
+    if (!isLoading) return;
+    setLoadingStep(0);
+    const t1 = setTimeout(() => setLoadingStep(1), 1800);
+    const t2 = setTimeout(() => setLoadingStep(2), 3500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [isLoading]);
+
   useEffect(() => {
     if (!session || session.diagnosis || hasDiagnosed.current) return;
     hasDiagnosed.current = true;
@@ -87,7 +115,33 @@ export default function DiagnosisPage() {
     runDiagnosis();
   }, [session, sessionId, setDiagnosis, addMessage]);
 
-  // 发送追问
+  const handleSaveCheckup = () => {
+    if (!plantId || !session?.diagnosis) return;
+
+    const diagnosis = session.diagnosis;
+
+    // Map confidence to health status
+    const confidence = diagnosis.confidence ?? 0;
+    const health = confidence >= 80 ? "healthy" : confidence >= 50 ? "watch" : "urgent";
+
+    updatePlantDiagnosis(plantId, {
+      health,
+      lastDiagnosisAt: Date.now(),
+      lastDiagnosisSummary: diagnosis.greeting?.slice(0, 60) || diagnosis.plantName || "",
+    });
+
+    addGrowthRecord({
+      id: nanoid(8),
+      plantId,
+      imageBase64: session.imageBase64,
+      note: `AI复查：${diagnosis.greeting?.slice(0, 40) || "诊断完成"}`,
+      createdAt: Date.now(),
+    });
+
+    setSaved(true);
+    setTimeout(() => router.push(`/plants/${plantId}`), 800);
+  };
+
   const handleSend = async (message: string) => {
     addMessage(sessionId, {
       id: nanoid(8),
@@ -98,17 +152,12 @@ export default function DiagnosisPage() {
 
     setIsTyping(true);
     try {
-      // 构建历史上下文传给后端
-      // history 必须以 user 开头，交替排列
       const currentSession = usePlantStore.getState().sessions[sessionId];
       const history = [
-        // 第一条固定为用户上传图片的动作
         { role: "user", content: "请帮我看看这棵植物" },
-        // 第二条为 AI 首次诊断回复
         ...(currentSession?.diagnosis?.greeting
           ? [{ role: "assistant", content: currentSession.diagnosis.greeting }]
           : []),
-        // 后续对话历史
         ...(currentSession?.messages || []).map(m => ({
           role: m.role,
           content: m.content,
@@ -144,11 +193,10 @@ export default function DiagnosisPage() {
     }
   };
 
-  // 在对话中追加照片
   const handleSendPhoto = async (file: File) => {
     const { base64 } = await compressImage(file);
+    void base64;
 
-    // 显示用户发送的图片作为消息
     addMessage(sessionId, {
       id: nanoid(8),
       role: "user",
@@ -158,7 +206,6 @@ export default function DiagnosisPage() {
 
     setIsTyping(true);
     try {
-      // Mock: 对追加照片给出回复
       const res = await fetch("/api/diagnosis/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -195,85 +242,219 @@ export default function DiagnosisPage() {
     );
   }
 
+  const diagnosis = session.diagnosis;
+  const confidence = diagnosis?.confidence ?? 0;
+  const severity = confidenceToSeverity(confidence);
+  const hasUserMessages = session.messages.filter(m => m.role === "user").length > 0;
+
   return (
-    <div className="chat-container bg-gray-50">
-      {/* 顶部导航 */}
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex items-center gap-3 safe-top shrink-0">
+    <div className="chat-container glass-bg">
+
+      {/* ── 顶部 Header ── */}
+      <header className="sticky top-0 z-10 px-4 py-3 flex items-center gap-3 safe-top shrink-0"
+        style={{ background: "var(--forest, #152E1E)" }}>
         <button
-          onClick={() => router.push("/")}
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+          onClick={() => router.push(plantId ? `/plants/${plantId}` : "/")}
+          className="w-8 h-8 flex items-center justify-center rounded-full transition-colors"
+          style={{ background: "rgba(255,255,255,0.12)", border: "none", WebkitAppearance: "none", cursor: "pointer" }}
+          aria-label="返回"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <ArrowLeft className="w-5 h-5 text-white" />
         </button>
-        <h1 className="font-medium text-gray-900">
-          {session.diagnosis?.plantName || "正在分析..."}
-        </h1>
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Stethoscope className="w-4 h-4 shrink-0" style={{ color: "#4CAF7A" }} />
+          <h1 className="font-bold text-white truncate text-[15px]">
+            {plantId && plant ? `${plant.name} · 健康复查` : "植物医生报告"}
+          </h1>
+        </div>
       </header>
 
-      {/* 消息区域 */}
       <div className="chat-messages px-4 py-4 flex flex-col gap-4">
-        {/* 用户上传的图片 */}
+
+        {/* ── 患者档案卡（有关联植物时显示）── */}
+        {plant && (
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: "rgba(21,46,30,0.06)", border: "1px solid rgba(21,46,30,0.10)" }}>
+            <div className="flex items-center gap-3 p-3">
+              <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0"
+                style={{ background: "linear-gradient(160deg,#0F2518,#2D5C3E)" }}>
+                <img src={plant.imageBase64} alt={plant.name}
+                  className="w-full h-full object-cover" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-[#152E1E] text-[14px] truncate">{plant.name}</p>
+                {plant.species && (
+                  <p className="text-[11px] text-[#6B7B6B] italic truncate">{plant.species}</p>
+                )}
+                <div className="flex items-center gap-1 mt-0.5">
+                  <CalendarDays className="w-3 h-3 text-[#6B7B6B]" />
+                  <span className="text-[10px] text-[#6B7B6B]">
+                    {plant.lastDiagnosisAt
+                      ? `上次诊断 ${Math.floor((Date.now() - plant.lastDiagnosisAt) / 86400000)} 天前`
+                      : "首次诊断"}
+                  </span>
+                </div>
+              </div>
+              <div className="shrink-0">
+                <Leaf className="w-4 h-4" style={{ color: "#4CAF7A" }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 用户上传的照片 ── */}
         <div className="self-end max-w-[70%]">
           <img
             src={session.imageBase64}
             alt="植物照片"
-            className="rounded-2xl shadow-sm border border-gray-100"
+            className="rounded-2xl shadow-sm border border-white/40"
           />
         </div>
 
-        {/* 加载状态 */}
-        {isLoading && <TypingIndicator />}
-
-        {/* 诊断卡片 */}
-        {session.diagnosis && !isLoading && (
-          <div className="-mx-4">
-            <DiagnosisCard diagnosis={session.diagnosis} />
+        {/* ── Loading 分析步骤 ── */}
+        {isLoading && (
+          <div className="glass-dark p-5 animate-scale-in">
+            <p className="text-base font-semibold text-[#1A2E1A] mb-4">正在分析你的植物...</p>
+            <div className="space-y-3">
+              {[
+                { label: "识别植物种类" },
+                { label: "检测叶片与健康状态" },
+                { label: "生成个性化养护建议" },
+              ].map((step, i) => {
+                const state = i < loadingStep ? "done" : i === loadingStep ? "active" : "pending";
+                return (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className={`step-dot-${state} shrink-0`} />
+                    <span className={`text-sm ${state === "pending" ? "text-gray-400" : "text-[#1A2E1A]"}`}>
+                      {step.label}
+                    </span>
+                    {state === "active" && (
+                      <Loader2 className="w-3.5 h-3.5 text-[#2D7D46] animate-spin ml-auto" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-4 text-xs text-[#6B7B6B]">我正在观察叶片颜色、形态和整体状态</p>
           </div>
         )}
 
-        {/* 快捷追问按钮 — 仅在首次诊断后、还没有追问时展示 */}
-        {session.diagnosis && !isLoading && session.messages.filter(m => m.role === "user").length === 0 && (
-          <div className="flex flex-wrap gap-2 justify-center">
-            {(session.diagnosis.nextQuestions?.length ? session.diagnosis.nextQuestions : []).map((q) => (
+        {/* ── 诊断结果区 ── */}
+        {diagnosis && !isLoading && (
+          <>
+            {/* 健康评分 Hero */}
+            <div className="rounded-2xl p-4 text-center"
+              style={{ background: "linear-gradient(160deg, #0F2518 0%, #1A3A2A 50%, #2D5C3E 100%)" }}>
+              <p className="text-[10px] font-black tracking-widest uppercase text-white/40 mb-1">健康评分</p>
+              <p className="text-[48px] font-black text-white leading-none">{confidence}</p>
+              {/* 严重程度条 */}
+              <div className="mt-3 mx-auto overflow-hidden rounded-full"
+                style={{ width: 160, height: 6, background: "rgba(255,255,255,0.12)" }}>
+                <div className="h-full rounded-full transition-all duration-700"
+                  style={{ width: `${confidence}%`, background: severity.color }} />
+              </div>
+              <p className="mt-2 text-[12px] font-bold" style={{ color: severity.color }}>
+                {severity.label}
+              </p>
+              {diagnosis.plantName && (
+                <p className="mt-3 text-[11px] text-white/50 italic">{diagnosis.plantName}</p>
+              )}
+            </div>
+
+            {/* DiagnosisCard — props 不变 */}
+            <div className="-mx-4">
+              <DiagnosisCard diagnosis={diagnosis} />
+            </div>
+
+            {/* 保存按钮 */}
+            {plantId ? (
               <button
-                key={q}
-                onClick={() => handleSend(q)}
-                className="px-3.5 py-2 bg-white border border-green-100 rounded-full text-xs text-[#2D7D46] hover:bg-green-50 transition-colors press-effect shadow-sm"
+                onClick={handleSaveCheckup}
+                disabled={saved}
+                className="cta-primary-forest w-full flex items-center justify-center gap-2 py-3.5 text-[15px]"
+                style={{
+                  border: "none",
+                  WebkitAppearance: "none",
+                  cursor: saved ? "default" : "pointer",
+                  opacity: saved ? 0.6 : 1,
+                }}
               >
-                {q}
+                <Save className="w-4 h-4" />
+                {saved ? "已保存 ✓" : "保存复查结果到档案"}
               </button>
-            ))}
-          </div>
+            ) : (
+              <button
+                onClick={() => router.push("/plants/add")}
+                className="cta-primary-forest w-full flex items-center justify-center gap-2 py-3.5 text-[15px]"
+                style={{ border: "none", WebkitAppearance: "none", cursor: "pointer" }}
+              >
+                保存到我的植物
+              </button>
+            )}
+
+            {/* Ask-doctor 推荐问题卡（用户尚未发问时显示）*/}
+            {!hasUserMessages && diagnosis.nextQuestions && diagnosis.nextQuestions.length > 0 && (
+              <div className="rounded-2xl p-4"
+                style={{ background: "rgba(255,255,255,0.55)", border: "1px solid rgba(255,255,255,0.7)", backdropFilter: "blur(12px)" }}>
+                <p className="text-[11px] font-black tracking-widest uppercase text-[#152E1E]/40 mb-3">
+                  💬 继续问医生
+                </p>
+                <div className="flex flex-col gap-2">
+                  {diagnosis.nextQuestions.map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => handleSend(q)}
+                      className="text-left px-3.5 py-2.5 rounded-xl text-[13px] text-[#152E1E] font-medium press-effect transition-colors"
+                      style={{
+                        background: "rgba(21,46,30,0.05)",
+                        border: "1px solid rgba(21,46,30,0.08)",
+                        WebkitAppearance: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 已追问分隔线 */}
+            {hasUserMessages && (
+              <div className="flex items-center gap-3 my-2">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-green-200 to-transparent" />
+                <span className="text-[10px] text-[#6B7B6B] whitespace-nowrap">继续追问 ↓</span>
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent via-green-200 to-transparent" />
+              </div>
+            )}
+          </>
         )}
 
-        {/* 对话分隔线 — 已有追问时显示 */}
-        {session.diagnosis && !isLoading && session.messages.filter(m => m.role === "user").length > 0 && (
-          <div className="flex items-center gap-3 my-2">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-green-200 to-transparent" />
-            <span className="text-[10px] text-[#6B7B6B] whitespace-nowrap">继续追问 ↓</span>
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-green-200 to-transparent" />
-          </div>
-        )}
-
-        {/* 对话消息 */}
+        {/* ── 对话消息 ── */}
         {session.messages.filter((msg, index) => {
           const isDuplicateOpening =
             index === 0 &&
             msg.role === "assistant" &&
-            session.diagnosis?.greeting &&
-            msg.content === session.diagnosis.greeting;
+            diagnosis?.greeting &&
+            msg.content === diagnosis.greeting;
           return !isDuplicateOpening;
         }).map((msg) => (
           <ChatMessage key={msg.id} role={msg.role} content={msg.content} />
         ))}
 
-        {/* 追问时的打字指示器 */}
-        {isTyping && <TypingIndicator />}
+        {isTyping && (
+          <div className="glass-dark px-4 py-3 self-start animate-scale-in">
+            <div className="flex gap-1.5 items-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2D7D46] animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2D7D46] animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2D7D46] animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          </div>
+        )}
 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 底部输入框 */}
       <ChatInput
         onSend={handleSend}
         onSendPhoto={handleSendPhoto}

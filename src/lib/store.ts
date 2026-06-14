@@ -35,6 +35,9 @@ export interface MyPlant {
   lastFertilizedAt: number;
   createdAt: number;
   notes: string;
+  health: "healthy" | "watch" | "urgent";
+  lastDiagnosisAt: number | null;
+  lastDiagnosisSummary: string;
 }
 
 export interface GrowthRecord {
@@ -59,6 +62,16 @@ interface PlantStore {
   plants: Record<string, MyPlant>;
   addPlant: (plant: MyPlant) => void;
   updatePlant: (id: string, updates: Partial<MyPlant>) => void;
+  updatePlantDiagnosis: (
+    id: string,
+    updates: {
+      health: MyPlant["health"];
+      lastDiagnosisAt: number;
+      lastDiagnosisSummary: string;
+      wateringIntervalDays?: number;
+      fertilizingIntervalDays?: number;
+    }
+  ) => void;
   deletePlant: (id: string) => void;
   waterPlant: (id: string) => void;
   fertilizePlant: (id: string) => void;
@@ -138,6 +151,29 @@ export const usePlantStore = create<PlantStore>()(
           };
         }),
 
+      updatePlantDiagnosis: (id, updates) =>
+        set((state) => {
+          const plant = state.plants[id];
+          if (!plant) return state;
+          return {
+            plants: {
+              ...state.plants,
+              [id]: {
+                ...plant,
+                health: updates.health,
+                lastDiagnosisAt: updates.lastDiagnosisAt,
+                lastDiagnosisSummary: updates.lastDiagnosisSummary,
+                ...(updates.wateringIntervalDays !== undefined && {
+                  wateringIntervalDays: updates.wateringIntervalDays,
+                }),
+                ...(updates.fertilizingIntervalDays !== undefined && {
+                  fertilizingIntervalDays: updates.fertilizingIntervalDays,
+                }),
+              },
+            },
+          };
+        }),
+
       deletePlant: (id) =>
         set((state) => {
           const { [id]: _, ...rest } = state.plants;
@@ -195,6 +231,21 @@ export const usePlantStore = create<PlantStore>()(
     }),
     {
       name: "plant-care-storage",
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        // Backfill new fields for plants saved before Task 1
+        const migratedPlants: Record<string, MyPlant> = {};
+        for (const [id, plant] of Object.entries(state.plants)) {
+          const p = plant as Partial<MyPlant> & Omit<MyPlant, "health" | "lastDiagnosisAt" | "lastDiagnosisSummary">;
+          migratedPlants[id] = {
+            ...plant,
+            health: p.health ?? "healthy",
+            lastDiagnosisAt: p.lastDiagnosisAt !== undefined ? p.lastDiagnosisAt : null,
+            lastDiagnosisSummary: p.lastDiagnosisSummary ?? "",
+          };
+        }
+        state.plants = migratedPlants;
+      },
     }
   )
 );

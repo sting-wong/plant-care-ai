@@ -3,61 +3,64 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { nanoid } from "nanoid";
-import { Leaf, Droplets, Sparkles, ChevronRight, Clock, Plus, Sun, CalendarDays, BookOpen, Camera, ImagePlus } from "lucide-react";
-import { PhotoCapture } from "@/components/photo-capture";
-import { EmptyPlantIllustration } from "@/components/illustrations";
+import { Droplets, Sparkles, ChevronRight, Clock, Plus, Camera } from "lucide-react";
 import { compressImage } from "@/lib/utils";
-import { usePlantStore, type MyPlant } from "@/lib/store";
-import { getCurrentSeasonalTips } from "@/lib/data/seasonal-tips";
+import { usePlantStore } from "@/lib/store";
+import { getTodayReminders } from "@/lib/care-tasks";
 
-function getTodayReminders(plants: Record<string, MyPlant>) {
-  const reminders: { plant: MyPlant; type: "water" | "fertilize"; daysOverdue: number }[] = [];
-  Object.values(plants).forEach((plant) => {
-    const daysSinceWatered = Math.floor(
-      (Date.now() - plant.lastWateredAt) / (1000 * 60 * 60 * 24)
+function PlantAvatar({ imageBase64, name, size = 56 }: { imageBase64?: string; name: string; size?: number }) {
+  if (imageBase64 && imageBase64.startsWith("data:")) {
+    return (
+      <img
+        src={imageBase64}
+        alt={name}
+        style={{ width: size, height: size }}
+        className="rounded-full object-cover"
+      />
     );
-    if (daysSinceWatered >= plant.wateringIntervalDays) {
-      reminders.push({ plant, type: "water", daysOverdue: daysSinceWatered - plant.wateringIntervalDays });
-    }
-    const daysSinceFertilized = Math.floor(
-      (Date.now() - plant.lastFertilizedAt) / (1000 * 60 * 60 * 24)
-    );
-    if (daysSinceFertilized >= plant.fertilizingIntervalDays) {
-      reminders.push({ plant, type: "fertilize", daysOverdue: daysSinceFertilized - plant.fertilizingIntervalDays });
-    }
-  });
-  return reminders.sort((a, b) => b.daysOverdue - a.daysOverdue);
+  }
+  const colors = ["#C8E6C9", "#DCEDC8", "#B2DFDB", "#F0F4C3", "#D7CCC8"];
+  const color = colors[name.charCodeAt(0) % colors.length];
+  return (
+    <div
+      style={{ width: size, height: size, background: color }}
+      className="rounded-full flex items-center justify-center shrink-0"
+    >
+      <span className="text-lg">🌿</span>
+    </div>
+  );
 }
 
-function getGreeting(plants: Record<string, MyPlant>, reminders: ReturnType<typeof getTodayReminders>) {
-  const overdueCount = reminders.filter((r) => r.daysOverdue > 0).length;
-  const todayCount = reminders.length;
-
-  if (overdueCount > 0) {
-    return `有 ${overdueCount} 棵植物在等你浇水哦`;
-  } else if (todayCount > 0) {
-    return `今天有 ${todayCount} 棵植物需要照顾`;
-  } else if (Object.keys(plants).length === 0) {
-    return "添加你的第一棵植物吧";
-  } else {
-    return "你的植物们今天都很好 ✨";
-  }
+// Maps 0–100 score to SVG stroke-dashoffset for a circle with r=38 (circumference ≈ 239)
+function scoreToOffset(score: number) {
+  const circumference = 2 * Math.PI * 38;
+  return circumference * (1 - score / 100);
 }
 
 export default function HomePage() {
   const router = useRouter();
-  const createSession = usePlantStore((s) => s.createSession);
-  const plants = usePlantStore((s) => s.plants);
-  const sessions = usePlantStore((s) => s.sessions);
+  const store = usePlantStore();
+  const { createSession, plants, sessions } = store;
 
   const reminders = getTodayReminders(plants);
-  const seasonalTips = getCurrentSeasonalTips();
-  const greeting = getGreeting(plants, reminders);
   const plantList = Object.values(plants).sort((a, b) => b.createdAt - a.createdAt);
   const recentSessions = Object.values(sessions)
     .filter((s) => s.diagnosis)
     .sort((a, b) => b.createdAt - a.createdAt)
     .slice(0, 3);
+
+  const heroReminder = reminders[0];
+  const overdueCount = reminders.filter((r) => r.daysOverdue > 0).length;
+  const healthyCount = plantList.filter((p) => p.health === "healthy").length;
+  const watchCount = plantList.filter((p) => p.health === "watch").length;
+  const urgentCount = plantList.filter((p) => p.health === "urgent").length;
+
+  // Garden health score: 100 minus 15 per overdue reminder, floored at 20
+  const gardenScore = plantList.length === 0
+    ? 0
+    : Math.max(20, 100 - overdueCount * 15);
+  const circumference = 2 * Math.PI * 38;
+  const dashOffset = scoreToOffset(gardenScore);
 
   const handleCapture = async (file: File) => {
     const { base64 } = await compressImage(file);
@@ -65,265 +68,333 @@ export default function HomePage() {
     createSession(sessionId, base64);
     router.push(`/diagnosis/${sessionId}`);
   };
+  void handleCapture;
+
+  const now = new Date();
+  const hour = now.getHours();
+  const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const dateLabel = `${month}月${day}日`;
+
+  const taskSubtitle =
+    overdueCount > 0
+      ? `有 ${overdueCount} 棵植物需要照顾`
+      : plantList.length > 0
+        ? "植物们今天状态都不错"
+        : "添加你的第一棵植物";
 
   return (
-    <main className="min-h-dvh animate-fade-in">
-      {/* 顶部渐变问候区 */}
-      <div className="bg-gradient-to-b from-[#E8F5E9] to-[#FAFDF7] -mx-0 px-5 pt-8 pb-5 rounded-b-[32px] mb-5">
-        <div className="flex items-center gap-2.5 mb-1">
-          <div className="w-9 h-9 bg-[#2D7D46]/10 rounded-xl flex items-center justify-center">
-            <Leaf className="w-5 h-5 text-[#2D7D46]" />
-          </div>
-          <h1 className="text-lg font-bold text-[#1A2E1A]">植物管家</h1>
-        </div>
-        <p className="text-sm text-[#6B7B6B] ml-[46px]">{greeting}</p>
-      </div>
+    <main className="glass-bg min-h-dvh pb-28 animate-fade-in">
 
-      <div className="px-5">
-      {/* 双入口：拍照 + 相册 */}
-      <div className="flex gap-3 mb-5">
-        <button
-          onClick={() => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.accept = "image/*";
-            input.capture = "environment" as any;
-            input.onchange = async (e) => {
-              const file = (e.target as HTMLInputElement).files?.[0];
-              if (file) await handleCapture(file);
-            };
-            input.click();
-          }}
-          className="flex-1 card-natural p-3.5 flex flex-col items-center gap-2 press-effect"
-        >
-          <div className="w-11 h-11 rounded-full bg-[#2D7D46]/10 flex items-center justify-center">
-            <Camera className="w-5 h-5 text-[#2D7D46]" />
-          </div>
-          <span className="text-xs font-medium text-[#1A2E1A]">拍照识别</span>
-        </button>
-
-        <button
-          onClick={() => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.accept = "image/*";
-            input.onchange = async (e) => {
-              const file = (e.target as HTMLInputElement).files?.[0];
-              if (file) await handleCapture(file);
-            };
-            input.click();
-          }}
-          className="flex-1 card-natural p-3.5 flex flex-col items-center gap-2 press-effect"
-        >
-          <div className="w-11 h-11 rounded-full bg-[#8BC34A]/10 flex items-center justify-center">
-            <ImagePlus className="w-5 h-5 text-[#8BC34A]" />
-          </div>
-          <span className="text-xs font-medium text-[#1A2E1A]">相册识别</span>
-        </button>
-      </div>
-
-      {/* 快捷工具栏 */}
-      <div className="flex gap-3 mb-5 overflow-x-auto hide-scrollbar -mx-5 px-5">
-        <Link
-          href="/tools/light-meter"
-          className="card-natural px-4 py-3 flex items-center gap-2.5 shrink-0 press-effect"
-        >
-          <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center">
-            <Sun className="w-4 h-4 text-[#F5A623]" />
-          </div>
-          <span className="text-xs font-medium text-[#1A2E1A]">光照计</span>
-        </Link>
-        <Link
-          href="/calendar"
-          className="card-natural px-4 py-3 flex items-center gap-2.5 shrink-0 press-effect"
-        >
-          <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center">
-            <CalendarDays className="w-4 h-4 text-[#2D7D46]" />
-          </div>
-          <span className="text-xs font-medium text-[#1A2E1A]">养护日历</span>
-        </Link>
-        <Link
-          href="/discover"
-          className="card-natural px-4 py-3 flex items-center gap-2.5 shrink-0 press-effect"
-        >
-          <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-[#4FC3F7]" />
-          </div>
-          <span className="text-xs font-medium text-[#1A2E1A]">植物百科</span>
-        </Link>
-      </div>
-
-      {/* 今日待办 */}
-      {reminders.length > 0 && (
-        <div className="mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-900">今日待办</span>
-            <Link href="/reminders" className="text-xs text-green-600">
-              查看全部
-            </Link>
-          </div>
-          <div className="space-y-2">
-            {reminders.slice(0, 4).map((r, i) => (
-              <Link
-                key={`${r.plant.id}-${r.type}-${i}`}
-                href={`/plants/${r.plant.id}`}
-                className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 p-3 hover:border-blue-200 transition-colors press-effect"
-              >
-                <div className="w-9 h-9 rounded-full overflow-hidden shrink-0">
-                  <img
-                    src={r.plant.imageBase64}
-                    alt={r.plant.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {r.plant.name}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {r.type === "water" ? "需要浇水" : "需要施肥"}
-                    {r.daysOverdue > 0 && (
-                      <span className="text-red-500 ml-1">
-                        · 已超期{r.daysOverdue}天
-                      </span>
-                    )}
-                  </p>
-                </div>
-                {r.type === "water" ? (
-                  <Droplets className="w-4 h-4 text-blue-400 shrink-0" />
-                ) : (
-                  <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                )}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 没有待办时的提示 */}
-      {reminders.length === 0 && plantList.length > 0 && (
-        <div className="mb-5 bg-green-50/50 border border-green-100/50 rounded-2xl p-4 text-center">
-          <p className="text-sm text-green-700">
-            今天没有需要照顾的植物，放松一下吧 ☀️
+      {/* ── 深绿 Hero ── */}
+      <div className="hero-forest">
+        {/* 状态栏占位 + 问候 */}
+        <div className="px-5 pt-14 pb-4">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-white/40 mb-1">
+            {timeGreeting} · {dateLabel}
           </p>
+          <h1 className="text-[26px] font-extrabold text-white leading-tight">我的植物花园</h1>
+          <p className="text-[13px] text-white/55 mt-1">{taskSubtitle}</p>
         </div>
-      )}
 
-      {/* 我的植物横向滚动 */}
-      {plantList.length > 0 && (
-        <div className="mb-5">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-gray-900">
-              我的植物 ({plantList.length})
-            </span>
-            <Link href="/plants" className="text-xs text-green-600">
-              查看全部
-            </Link>
-          </div>
-          <div className="flex gap-3 overflow-x-auto hide-scrollbar -mx-5 px-5 pb-2">
-            {plantList.map((plant) => (
-              <Link
-                key={plant.id}
-                href={`/plants/${plant.id}`}
-                className="flex flex-col items-center gap-1.5 shrink-0"
-              >
-                <div className="w-14 h-14 rounded-full overflow-hidden ring-2 ring-green-100">
-                  <img
-                    src={plant.imageBase64}
-                    alt={plant.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <span className="text-[10px] text-gray-600 max-w-[56px] truncate">
-                  {plant.name}
-                </span>
-              </Link>
-            ))}
-            <Link
-              href="/plants/add"
-              className="flex flex-col items-center gap-1.5 shrink-0"
-            >
-              <div className="w-14 h-14 rounded-full border-2 border-dashed border-gray-200 flex items-center justify-center">
-                <Plus className="w-5 h-5 text-gray-400" />
-              </div>
-              <span className="text-[10px] text-gray-400">添加</span>
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* 没有植物时的引导 */}
-      {plantList.length === 0 && (
-        <div className="mb-5 card-natural p-6 text-center animate-scale-in">
-          <EmptyPlantIllustration className="w-32 h-32 mx-auto mb-2 animate-float" />
-          <p className="text-sm font-medium text-[#1A2E1A] mb-1">还没有添加植物</p>
-          <p className="text-xs text-[#6B7B6B] mb-4">
-            添加你的植物，我来帮你记住浇水时间
-          </p>
-          <Link
-            href="/plants/add"
-            className="inline-block px-5 py-2.5 btn-primary text-sm"
-          >
-            添加第一棵植物
-          </Link>
-        </div>
-      )}
-
-      {/* 季节养护提示 */}
-      {seasonalTips.length > 0 && (
-        <div className="mb-5">
-          <div className="card-natural p-4 border-l-4 border-l-[#8BC34A]">
-            <p className="text-xs font-medium text-[#2D7D46] mb-1">
-              💡 {seasonalTips[0].title}
-            </p>
-            <p className="text-xs text-[#6B7B6B] leading-relaxed">
-              {seasonalTips[0].content.slice(0, 80)}...
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* 最近诊断 */}
-      {recentSessions.length > 0 && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-sm font-medium text-gray-900">最近诊断</span>
+        {/* 花园健康评分卡 */}
+        <div className="mx-4 mb-6 rounded-3xl px-5 py-4 flex items-center gap-5"
+          style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.10)" }}>
+          {/* SVG 环 */}
+          <div className="relative shrink-0" style={{ width: 88, height: 88 }}>
+            <svg width="88" height="88" style={{ transform: "rotate(-90deg)" }}>
+              <circle cx="44" cy="44" r="38" fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="7" />
+              <circle
+                cx="44" cy="44" r="38" fill="none"
+                stroke={gardenScore >= 70 ? "#4CAF7A" : gardenScore >= 40 ? "#FBBF24" : "#F87171"}
+                strokeWidth="7"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={plantList.length === 0 ? circumference : dashOffset}
+                style={{ transition: "stroke-dashoffset 0.8s ease" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-[26px] font-black text-white leading-none">
+                {plantList.length === 0 ? "—" : gardenScore}
+              </span>
+              <span className="text-[8px] font-bold tracking-widest uppercase text-white/40 mt-0.5">SCORE</span>
             </div>
-            <Link href="/history" className="text-xs text-green-600">
-              全部记录
-            </Link>
           </div>
-          <div className="space-y-2">
-            {recentSessions.map((session) => (
-              <Link
-                key={session.id}
-                href={`/diagnosis/${session.id}`}
-                className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 p-3 hover:border-green-200 transition-colors press-effect"
-              >
-                <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0">
-                  <img
-                    src={session.imageBase64}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {session.diagnosis?.plantName}
-                  </p>
-                  <p className="text-xs text-gray-400 truncate">
-                    {(session.diagnosis?.greeting || "").slice(0, 30)}...
-                  </p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
-              </Link>
-            ))}
+
+          {/* 统计列 */}
+          <div className="flex-1 space-y-2">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-white/40 mb-2">花园概览</p>
+            {plantList.length === 0 ? (
+              <p className="text-[13px] text-white/50">还没有植物</p>
+            ) : (
+              <>
+                {urgentCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "#F87171", boxShadow: "0 0 6px rgba(248,113,113,.4)" }} />
+                    <span className="flex-1 text-[13px] font-medium text-white/80">需要紧急处理</span>
+                    <span className="text-[14px] font-black text-white">{urgentCount}</span>
+                  </div>
+                )}
+                {watchCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "#FBBF24", boxShadow: "0 0 6px rgba(251,191,36,.4)" }} />
+                    <span className="flex-1 text-[13px] font-medium text-white/80">需要关注</span>
+                    <span className="text-[14px] font-black text-white">{watchCount}</span>
+                  </div>
+                )}
+                {healthyCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "#4CAF7A", boxShadow: "0 0 6px rgba(76,175,122,.4)" }} />
+                    <span className="flex-1 text-[13px] font-medium text-white/80">状态良好</span>
+                    <span className="text-[14px] font-black text-white">{healthyCount}</span>
+                  </div>
+                )}
+                {urgentCount === 0 && watchCount === 0 && healthyCount === 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: "#4CAF7A" }} />
+                    <span className="flex-1 text-[13px] font-medium text-white/80">全部待评估</span>
+                    <span className="text-[14px] font-black text-white">{plantList.length}</span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
-      )}
       </div>
+
+      {/* ── 奶油色主体区（圆角上推） ── */}
+      <div
+        className="relative -mt-5 px-4 pt-5 space-y-5"
+        style={{ background: "var(--cream, #F9F6EF)", borderRadius: "28px 28px 0 0", minHeight: "60vh" }}
+      >
+        {/* 今日任务 */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-bold tracking-widest uppercase text-[#6B7B6B]">今日任务</span>
+            {reminders.length > 0 && (
+              <span className="text-[11px] font-semibold text-[#2D7D46]">{reminders.length} 项</span>
+            )}
+          </div>
+
+          {reminders.length > 0 ? (
+            <div className="space-y-2">
+              {reminders.slice(0, 4).map((r) => {
+                const isUrgent = r.daysOverdue > 0;
+                return (
+                  <div
+                    key={`${r.plant.id}-${r.type}`}
+                    className={isUrgent ? "task-card-urgent press-effect" : "task-card-warn press-effect"}
+                    onClick={() => router.push(`/plants/${r.plant.id}`)}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* avatar */}
+                      <div
+                        className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden"
+                        style={{ background: isUrgent ? "#FEE2E2" : "#FEF3C7" }}
+                      >
+                        {r.plant.imageBase64?.startsWith("data:") ? (
+                          <img src={r.plant.imageBase64} alt={r.plant.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-2xl">🌿</span>
+                        )}
+                      </div>
+                      {/* info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-bold text-[#111C13] leading-snug truncate">{r.plant.name}</p>
+                        <p className="text-[12px] text-[#5A6B5A] mt-0.5">
+                          {r.type === "water" ? "该浇水了" : "该施肥了"}
+                        </p>
+                      </div>
+                      {/* badge */}
+                      <div
+                        className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold"
+                        style={isUrgent
+                          ? { background: "#FEE2E2", color: "#C53030" }
+                          : { background: "#FEF3C7", color: "#B45309" }
+                        }
+                      >
+                        {isUrgent ? `超 ${r.daysOverdue}天` : "今天"}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : plantList.length === 0 ? (
+            /* 空状态：无植物 */
+            <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "#fff", border: "1px solid rgba(21,46,30,0.06)" }}>
+              <div className="w-10 h-10 rounded-full bg-[#2D7D46]/10 flex items-center justify-center shrink-0">
+                <Plus className="w-5 h-5 text-[#2D7D46]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[#1A2E1A]">还没有植物</p>
+                <p className="text-xs text-[#6B7B6B] mt-0.5">添加植物后自动生成养护提醒</p>
+              </div>
+              <button
+                onClick={() => router.push("/plants/add")}
+                className="shrink-0 text-xs font-semibold text-[#2D7D46] bg-[#2D7D46]/10 px-3 py-1.5 rounded-full"
+              >
+                添加
+              </button>
+            </div>
+          ) : (
+            /* 空状态：有植物但今天无任务 */
+            <div className="rounded-2xl p-4 flex items-center gap-3" style={{ background: "#fff", border: "1px solid rgba(21,46,30,0.06)" }}>
+              <span className="text-2xl">☀️</span>
+              <p className="text-sm text-[#5A6B5A]">植物们今天都很好，无需照顾</p>
+            </div>
+          )}
+        </section>
+
+        {/* 我的植物横滚 */}
+        {(plantList.length > 0 || true) && (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-bold tracking-widest uppercase text-[#6B7B6B]">
+                我的植物 {plantList.length > 0 ? `(${plantList.length})` : ""}
+              </span>
+              {plantList.length > 0 && (
+                <Link href="/plants" className="text-[12px] font-bold text-[#2D7D46]">查看全部</Link>
+              )}
+            </div>
+            <div className="flex gap-2.5 overflow-x-auto hide-scrollbar -mx-4 px-4 pb-1">
+              {plantList.map((plant) => {
+                const daysSinceWatered = Math.floor((Date.now() - plant.lastWateredAt) / 86400000);
+                const needsWater = daysSinceWatered >= plant.wateringIntervalDays;
+                const healthColor = plant.health === "urgent" ? "#F87171"
+                  : plant.health === "watch" ? "#FBBF24"
+                  : "#4CAF7A";
+                return (
+                  <Link
+                    key={plant.id}
+                    href={`/plants/${plant.id}`}
+                    className="shrink-0"
+                    aria-label={`查看 ${plant.name}`}
+                    style={{ width: 90 }}
+                  >
+                    <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", boxShadow: "0 4px 14px rgba(21,46,30,0.09)" }}>
+                      <div className="relative" style={{ width: 90, height: 76 }}>
+                        {plant.imageBase64?.startsWith("data:") ? (
+                          <img src={plant.imageBase64} alt={plant.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-[#C8E6C9] text-3xl">🌿</div>
+                        )}
+                        {/* 顶部健康色条 */}
+                        <div className="absolute bottom-0 left-0 right-0 h-1" style={{ background: healthColor }} />
+                        {/* 浇水角标 */}
+                        {needsWater && (
+                          <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-blue-400 border-2 border-white flex items-center justify-center">
+                            <Droplets className="w-2 h-2 text-white" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="px-2 py-1.5">
+                        <p className="text-[11px] font-bold text-[#111C13] truncate">{plant.name}</p>
+                        <p className="text-[10px] font-semibold mt-0.5"
+                          style={{ color: healthColor }}>
+                          {plant.health === "urgent" ? "紧急" : plant.health === "watch" ? "关注" : "良好"}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+              <Link
+                href="/plants/add"
+                className="shrink-0 flex flex-col items-center justify-center gap-1.5"
+                aria-label="添加植物"
+                style={{ width: 90, height: 118 }}
+              >
+                <div className="w-full h-full rounded-2xl flex flex-col items-center justify-center gap-1.5"
+                  style={{ border: "2px dashed rgba(45,125,70,0.22)" }}>
+                  <Plus className="w-5 h-5 text-[#2D7D46]/50" />
+                  <span className="text-[11px] font-semibold text-[#2D7D46]/50">添加</span>
+                </div>
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {/* AI 诊断 CTA */}
+        <section>
+          <div
+            className="rounded-2xl px-4 py-4 press-effect cursor-pointer"
+            style={{ background: "linear-gradient(135deg, #152E1E 0%, #1E4029 100%)", boxShadow: "0 8px 28px rgba(21,46,30,0.14)" }}
+            onClick={() => router.push("/scan")}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#4CAF7A]" style={{ animation: "livepulse 2s infinite" }} />
+              <p className="text-[10px] font-bold tracking-widest uppercase text-white/45">AI 植物诊断</p>
+            </div>
+            <p className="text-[14px] text-white/85 leading-snug">
+              发现叶片异常？拍张照片，AI 立即分析健康状态
+            </p>
+            <div className="flex items-center justify-between mt-3">
+              <p className="text-[10px] font-semibold text-white/30">识别 · 诊断 · 养护建议</p>
+              <div className="w-8 h-8 rounded-full bg-[#4CAF7A]/20 flex items-center justify-center">
+                <Camera className="w-4 h-4 text-[#4CAF7A]" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 最近诊断 */}
+        {recentSessions.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#6B7B6B]" />
+                <span className="text-[10px] font-bold tracking-widest uppercase text-[#6B7B6B]">最近诊断</span>
+              </div>
+              <Link href="/history" className="text-[12px] font-bold text-[#2D7D46]">全部记录</Link>
+            </div>
+            <div className="space-y-2">
+              {recentSessions.map((session) => {
+                const isHealthy = session.diagnosis?.healthStatus === "healthy";
+                return (
+                  <Link
+                    key={session.id}
+                    href={`/diagnosis/${session.id}`}
+                    className="flex items-center gap-3 p-3 press-effect rounded-2xl"
+                    style={{ background: "#fff", boxShadow: "0 1px 3px rgba(21,46,30,0.06)" }}
+                    aria-label={`诊断记录 ${session.diagnosis?.plantName}`}
+                  >
+                    <div className="w-11 h-11 rounded-2xl overflow-hidden shrink-0">
+                      <img src={session.imageBase64} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-bold text-[#111C13] truncate">{session.diagnosis?.plantName}</p>
+                      <p className="text-[11px] text-[#5A6B5A] mt-0.5 truncate">
+                        {(session.diagnosis?.greeting || "").slice(0, 30)}...
+                      </p>
+                    </div>
+                    <div
+                      className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black"
+                      style={isHealthy
+                        ? { background: "#DCFCE7", color: "#15803D" }
+                        : { background: "#FEF3C7", color: "#B45309" }
+                      }
+                    >
+                      {isHealthy ? "良好" : "关注"}
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-[#9AAA9A] shrink-0 ml-1" />
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+      </div>
+
+      {/* livepulse 动画（内联 style） */}
+      <style>{`
+        @keyframes livepulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: .5; transform: scale(.85); }
+        }
+      `}</style>
     </main>
   );
 }

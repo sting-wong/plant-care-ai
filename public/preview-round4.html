@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390, initial-scale=1, maximum-scale=1">
+<title>Round 4 Preview v2 — Plant Health Journal</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --forest:       #152E1E;
+  --forest-mid:   #2D7D46;
+  --forest-light: #4CAF7A;
+  --cream:        #F9F6EF;
+  --cream-card:   #FFFFFF;
+  --sand:         #EDE8DE;
+  --text-1:       #111C13;
+  --text-2:       #5A6B5A;
+  --text-3:       #9AAA9A;
+  --red:          #C53030;
+  --red-bg:       #FFF1F0;
+  --amber:        #B45309;
+  --amber-bg:     #FFFBEB;
+  --blue:         #1D4ED8;
+  --blue-bg:      #EFF6FF;
+  --sh1: 0 1px 3px rgba(21,46,30,.06);
+  --sh2: 0 4px 14px rgba(21,46,30,.09);
+  --sh3: 0 8px 28px rgba(21,46,30,.14);
+  --sh4: 0 16px 48px rgba(21,46,30,.20);
+}
+body {
+  background: #DDD9CF;
+  font-family: -apple-system,"SF Pro Text","Helvetica Neue",sans-serif;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 12px 72px;
+}
+
+/* ── NAV ── */
+.nav {
+  position: sticky; top: 0; z-index: 200;
+  display: flex; gap: 6px;
+  background: rgba(221,217,207,.93);
+  backdrop-filter: blur(12px);
+  padding: 8px 12px;
+  border-radius: 99px;
+  box-shadow: var(--sh3);
+}
+.nav button {
+  padding: 7px 16px; border: none; border-radius: 99px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  background: transparent; color: var(--text-2); transition: all .18s;
+}
+.nav button.active { background: var(--forest); color: #fff; }
+
+/* ── PHONE SHELL ── */
+.phone {
+  width: 390px; min-height: 844px;
+  border-radius: 48px; overflow: hidden;
+  box-shadow: 0 32px 96px rgba(0,0,0,.32), 0 0 0 1px rgba(0,0,0,.1);
+  background: var(--cream); display: none; flex-direction: column;
+  position: relative;
+}
+.phone.active { display: flex; }
+
+/* ── SHARED ── */
+.caps { font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--text-3); }
+.body-s { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+.scrollable { overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; }
+
+/* ────────────────────────────────────
+   PAGE 1 · HOME
+──────────────────────────────────── */
+.home-bg {
+  background: linear-gradient(170deg, #152E1E 0%, #1E4029 60%, #2D5C3E 100%);
+}
+
+/* Status bar placeholder */
+.status-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 24px 0;
+}
+.status-time { font-size: 15px; font-weight: 700; color: #fff; }
+.status-icons { display: flex; gap: 5px; align-items: center; }
+.status-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,.6); }
+
+/* Hero */
+.home-hero {
+  padding: 20px 20px 28px;
+  background: linear-gradient(170deg, #152E1E 0%, #1E4029 60%, #2D5C3E 100%);
+}
+.home-date { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.4); margin-bottom: 4px; }
+.home-title { font-size: 26px; font-weight: 800; color: #fff; line-height: 1.2; }
+.home-sub { font-size: 13px; color: rgba(255,255,255,.55); margin-top: 5px; }
+
+/* Garden Score Card */
+.garden-card {
+  margin: 0 16px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(16px);
+  border-radius: 24px;
+  padding: 18px 20px;
+  display: flex; align-items: center; gap: 18px;
+}
+.gcard-ring { position: relative; width: 88px; height: 88px; flex-shrink: 0; }
+.gcard-ring svg { width: 88px; height: 88px; }
+.gcard-ring-inner {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.gcard-score { font-size: 26px; font-weight: 900; color: #fff; line-height: 1; }
+.gcard-score-label { font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.4); margin-top: 2px; }
+.gcard-stats { flex: 1; }
+.gcard-title { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.4); margin-bottom: 10px; }
+.gstat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.gstat-row:last-child { margin-bottom: 0; }
+.gstat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.gstat-dot.r { background: #F87171; box-shadow: 0 0 6px rgba(248,113,113,.4); }
+.gstat-dot.a { background: #FBBF24; box-shadow: 0 0 6px rgba(251,191,36,.4); }
+.gstat-dot.g { background: #4CAF7A; box-shadow: 0 0 6px rgba(76,175,122,.4); }
+.gstat-label { flex: 1; font-size: 13px; font-weight: 500; color: rgba(255,255,255,.8); }
+.gstat-count { font-size: 14px; font-weight: 800; color: #fff; }
+
+/* Today Tasks */
+.home-body {
+  background: var(--cream);
+  border-radius: 28px 28px 0 0;
+  margin-top: -18px;
+  padding: 20px 16px 0;
+  flex: 1;
+}
+.tasks-section { margin-bottom: 20px; }
+.task-card {
+  border-radius: 18px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 13px;
+  margin-bottom: 8px;
+  box-shadow: var(--sh1);
+  position: relative; overflow: hidden;
+}
+.task-card.urgent {
+  background: #fff;
+  border-left: 3.5px solid var(--red);
+}
+.task-card.warn {
+  background: #fff;
+  border-left: 3.5px solid #FBBF24;
+}
+.task-urgency-stripe {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 4px;
+  opacity: .15;
+}
+.task-urgency-stripe.r { background: var(--red); }
+.task-urgency-stripe.a { background: #FBBF24; }
+.task-avatar {
+  width: 46px; height: 46px; border-radius: 14px;
+  font-size: 24px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.task-avatar.r { background: #FEE2E2; }
+.task-avatar.a { background: #FEF3C7; }
+.task-info { flex: 1; min-width: 0; }
+.task-plant-name { font-size: 15px; font-weight: 700; color: var(--text-1); }
+.task-type { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.task-badge {
+  padding: 4px 9px; border-radius: 99px;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.task-badge.r { background: #FEE2E2; color: var(--red); }
+.task-badge.a { background: #FEF3C7; color: var(--amber); }
+
+/* Plants row */
+.plants-row-wrap { margin-bottom: 20px; }
+.plants-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.plants-row-link { font-size: 12px; font-weight: 700; color: var(--forest-mid); }
+.plants-row {
+  display: flex; gap: 10px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  margin: 0 -16px; padding: 4px 16px 6px;
+  scrollbar-width: none;
+}
+.plants-row::-webkit-scrollbar { display: none; }
+.pcard {
+  flex-shrink: 0; width: 96px;
+  border-radius: 18px; overflow: hidden;
+  background: #fff; box-shadow: var(--sh2);
+}
+.pcard-photo {
+  width: 96px; height: 80px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; position: relative;
+}
+.pcard-health-stripe {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
+}
+.pcard-info { padding: 8px 8px 10px; }
+.pcard-name { font-size: 11px; font-weight: 700; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pcard-status { font-size: 10px; color: var(--text-3); margin-top: 2px; font-weight: 600; }
+.pcard-add {
+  flex-shrink: 0; width: 96px; height: 118px;
+  border-radius: 18px; border: 2px dashed rgba(45,125,70,.22);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+}
+.pcard-add-icon { font-size: 22px; color: rgba(45,125,70,.45); }
+.pcard-add-text { font-size: 11px; font-weight: 600; color: rgba(45,125,70,.5); }
+
+/* AI Brief */
+.ai-brief {
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #152E1E 0%, #1E4029 100%);
+  border-radius: 20px; padding: 16px 18px; box-shadow: var(--sh3);
+}
+.ai-brief-top { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.ai-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #4CAF7A; animation: livepulse 2s infinite; }
+@keyframes livepulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }
+.ai-brief-label { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.45); }
+.ai-brief-body { font-size: 14px; color: rgba(255,255,255,.85); line-height: 1.55; }
+.ai-brief-foot { font-size: 10px; color: rgba(255,255,255,.3); margin-top: 8px; font-weight: 600; }
+
+/* Recent */
+.recent-section { margin-bottom: 16px; }
+.ritem {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border-radius: 14px; padding: 11px 12px;
+  margin-bottom: 8px; box-shadow: var(--sh1);
+}
+.ritem-img {
+  width: 42px; height: 42px; border-radius: 10px;
+  font-size: 22px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ritem-info { flex: 1; min-width: 0; }
+.ritem-name { font-size: 13px; font-weight: 700; color: var(--text-1); }
+.ritem-sub { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+.rpill { padding: 3px 9px; border-radius: 99px; font-size: 10px; font-weight: 800; }
+.rpill.g { background: #DCFCE7; color: #15803D; }
+.rpill.a { background: #FEF3C7; color: var(--amber); }
+
+/* HOME BOTTOM NAV */
+.bnav {
+  position: sticky; bottom: 0; z-index: 10;
+  background: rgba(249,246,239,.94); backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(21,46,30,.06);
+  display: flex; padding: 10px 0 24px;
+}
+.bni { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.bni-icon { font-size: 22px; }
+.bni-lbl { font-size: 9px; font-weight: 700; letter-spacing: .04em; color: var(--text-3); }
+.bni.on .bni-lbl { color: var(--forest-mid); }
+.bni-pip { width: 4px; height: 4px; border-radius: 50%; background: var(--forest-mid); margin: 0 auto; }
+
+/* ────────────────────────────────────
+   PAGE 2 · PLANT DETAIL
+──────────────────────────────────── */
+
+/* Hero */
+.detail-hero {
+  height: 280px; position: relative; flex-shrink: 0;
+  background: linear-gradient(160deg, #0F2518 0%, #1A3A2A 50%, #2D5C3E 100%);
+  overflow: hidden;
+}
+.detail-hero-plant { position: absolute; inset: 0; font-size: 130px; display: flex; align-items: center; justify-content: center; opacity: .13; filter: blur(2px); user-select: none; }
+.detail-hero-grad { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(15,37,24,0) 30%, rgba(15,37,24,.88) 100%); }
+.detail-back {
+  position: absolute; top: 54px; left: 16px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,.12); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center; font-size: 15px; color: #fff;
+}
+.detail-hero-bottom {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 0 18px 20px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+}
+.detail-name { font-size: 32px; font-weight: 900; color: #fff; line-height: 1; }
+.detail-species { font-size: 12px; color: rgba(255,255,255,.55); font-style: italic; margin-top: 3px; }
+.detail-since { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.35); letter-spacing: .08em; text-transform: uppercase; margin-top: 5px; }
+.detail-score-bubble {
+  background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(12px); border-radius: 18px; padding: 12px 16px; text-align: center; flex-shrink: 0;
+}
+.detail-score-num { font-size: 26px; font-weight: 900; color: #fff; line-height: 1; }
+.detail-score-ring { width: 48px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.15); margin: 6px auto 4px; overflow: hidden; }
+.detail-score-ring-fill { height: 100%; border-radius: 2px; background: #4CAF7A; }
+.detail-score-tag { font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #4CAF7A; }
+
+.detail-body { background: var(--cream); border-radius: 28px 28px 0 0; margin-top: -22px; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 20px 16px 120px; }
+
+/* 3 Metrics */
+.metrics { display: flex; gap: 8px; margin-bottom: 18px; }
+.metric {
+  flex: 1; background: #fff; border-radius: 18px; padding: 14px 10px 12px;
+  text-align: center; box-shadow: var(--sh2); position: relative; overflow: hidden;
+}
+.metric-top-stripe { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.metric-emoji { font-size: 20px; margin-bottom: 6px; }
+.metric-val { font-size: 14px; font-weight: 800; line-height: 1.2; }
+.metric-val.r { color: var(--red); }
+.metric-val.a { color: var(--amber); }
+.metric-val.g { color: #15803D; }
+.metric-key { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); margin-top: 4px; }
+.metric-mini-bar { width: 36px; height: 3px; border-radius: 2px; background: #E8EDE5; margin: 6px auto 0; overflow: hidden; }
+.metric-mini-fill { height: 100%; border-radius: 2px; }
+.mmf-r { background: var(--red); width: 18%; }
+.mmf-a { background: #FBBF24; width: 50%; }
+.mmf-g { background: #4CAF7A; width: 78%; }
+
+/* Primary CTA */
+.primary-cta {
+  width: 100%; padding: 17px 20px; border: none; border-radius: 20px;
+  background: var(--forest); color: #fff; font-size: 16px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  box-shadow: 0 6px 24px rgba(21,46,30,.3); cursor: pointer; margin-bottom: 10px;
+}
+.secondary-row { display: flex; gap: 8px; margin-bottom: 20px; }
+.secondary-btn {
+  flex: 1; padding: 12px 10px; border: 1.5px solid rgba(21,46,30,.10);
+  border-radius: 16px; background: #fff; color: var(--text-1); font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; box-shadow: var(--sh1);
+}
+
+/* Last Report Card */
+.last-report {
+  background: #fff; border-radius: 20px; padding: 16px;
+  box-shadow: var(--sh2); margin-bottom: 18px;
+  border-left: 4px solid #4CAF7A;
+}
+.lrep-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.lrep-badge { display: flex; align-items: center; gap: 6px; }
+.lrep-icon-wrap { width: 30px; height: 30px; border-radius: 9px; background: #DCFCE7; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.lrep-badge-text { font-size: 12px; font-weight: 800; color: #15803D; }
+.lrep-date { font-size: 11px; color: var(--text-3); font-weight: 600; }
+.lrep-score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.lrep-score-big { font-size: 36px; font-weight: 900; color: var(--text-1); line-height: 1; }
+.lrep-score-sub { flex: 1; }
+.lrep-score-status { font-size: 13px; font-weight: 700; color: #15803D; }
+.lrep-score-plant { font-size: 11px; color: var(--text-2); margin-top: 2px; font-style: italic; }
+.lrep-text { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+.lrep-cta { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--forest-mid); margin-top: 10px; }
+
+/* Growth Journal */
+.journal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.journal-list { display: flex; flex-direction: column; gap: 0; }
+.jentry { display: flex; gap: 12px; }
+.jentry-left { display: flex; flex-direction: column; align-items: center; width: 36px; flex-shrink: 0; }
+.jentry-dot { width: 36px; height: 36px; border-radius: 50%; background: #fff; border: 2px solid rgba(45,125,70,.18); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; box-shadow: var(--sh1); }
+.jentry-line { flex: 1; width: 1px; background: rgba(45,125,70,.14); margin: 4px 0; min-height: 16px; }
+.jentry-content { flex: 1; min-width: 0; padding-bottom: 16px; }
+.jentry-img { width: 100%; height: 148px; border-radius: 16px; font-size: 44px; display: flex; align-items: center; justify-content: center; margin-bottom: 7px; }
+.jentry-meta { font-size: 11px; font-weight: 700; color: var(--text-3); }
+.jentry-note { font-size: 13px; color: var(--text-1); margin-top: 3px; }
+
+/* ────────────────────────────────────
+   PAGE 3 · DIAGNOSIS REPORT
+──────────────────────────────────── */
+.diag-header-bar {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(249,246,239,.93); backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(21,46,30,.06);
+  padding: 52px 16px 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.dback { width: 32px; height: 32px; border-radius: 50%; background: rgba(21,46,30,.06); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text-1); flex-shrink: 0; }
+.dtitle { flex: 1; font-size: 16px; font-weight: 800; color: var(--text-1); }
+.ddate { font-size: 11px; font-weight: 600; color: var(--text-3); }
+
+.diag-body { overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; padding: 16px 16px 130px; }
+
+/* Patient row */
+.patient-row {
+  display: flex; align-items: center; gap: 14px;
+  background: #fff; border-radius: 18px; padding: 14px 16px;
+  box-shadow: var(--sh1); margin-bottom: 16px;
+}
+.patient-photo { width: 60px; height: 60px; border-radius: 16px; font-size: 30px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.patient-details { flex: 1; }
+.patient-name { font-size: 17px; font-weight: 800; color: var(--text-1); }
+.patient-species { font-size: 11px; font-style: italic; color: var(--text-2); margin-top: 2px; }
+.patient-time { font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); margin-top: 7px; }
+.patient-tag { padding: 5px 11px; border-radius: 99px; background: var(--blue-bg); font-size: 10px; font-weight: 800; color: var(--blue); letter-spacing: .06em; flex-shrink: 0; }
+
+/* Score Hero */
+.score-hero-wrap {
+  background: var(--forest);
+  border-radius: 24px; padding: 26px 20px; margin-bottom: 12px;
+  box-shadow: var(--sh4); text-align: center;
+}
+.score-ring-outer { display: inline-flex; position: relative; width: 108px; height: 108px; }
+.score-ring-outer svg { width: 108px; height: 108px; }
+.score-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.score-hero-num { font-size: 36px; font-weight: 900; color: #fff; line-height: 1; }
+.score-hero-denom { font-size: 12px; font-weight: 700; color: rgba(255,255,255,.35); margin-top: 2px; }
+.score-hero-status { font-size: 17px; font-weight: 800; color: #4CAF7A; margin-top: 14px; }
+.score-hero-species { font-size: 12px; font-style: italic; color: rgba(255,255,255,.45); margin-top: 3px; }
+.conf-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 12px; padding: 6px 14px; border-radius: 99px;
+  background: rgba(255,255,255,.08);
+}
+.conf-dot { width: 6px; height: 6px; border-radius: 50%; background: #4CAF7A; }
+.conf-label { font-size: 11px; font-weight: 700; color: rgba(255,255,255,.55); }
+
+/* Summary block */
+.diag-summary {
+  background: #fff; border-radius: 18px; padding: 16px 18px;
+  box-shadow: var(--sh1); margin-bottom: 12px;
+}
+.block-label { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); margin-bottom: 8px; }
+.summary-text { font-size: 15px; color: var(--text-1); line-height: 1.65; }
+
+/* Severity bar */
+.severity-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.severity-label { font-size: 11px; font-weight: 700; color: var(--text-3); flex-shrink: 0; }
+.severity-track { flex: 1; height: 8px; background: #E8EDE5; border-radius: 99px; overflow: hidden; }
+.severity-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #4CAF7A 0%, #FBBF24 55%, #F87171 100%); width: 28%; }
+.severity-val { font-size: 12px; font-weight: 800; color: #15803D; flex-shrink: 0; }
+
+/* Issues */
+.issues-section { margin-bottom: 12px; }
+.issue-item {
+  background: var(--amber-bg); border: 1px solid rgba(180,83,9,.12);
+  border-radius: 14px; padding: 12px 14px;
+  display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px;
+}
+.issue-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.issue-text { font-size: 13px; color: #78350F; line-height: 1.45; }
+
+/* Prescription */
+.rx-section { margin-bottom: 12px; }
+.rx-header-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.rx-icon-bg { width: 28px; height: 28px; border-radius: 9px; background: rgba(45,125,70,.1); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.rx-item {
+  background: #fff; border-radius: 16px; padding: 14px 14px;
+  display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px;
+  box-shadow: var(--sh1);
+}
+.rx-num {
+  width: 26px; height: 26px; border-radius: 50%; background: var(--forest);
+  color: #fff; font-size: 12px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+}
+.rx-body { flex: 1; }
+.rx-title { font-size: 14px; font-weight: 700; color: var(--text-1); margin-bottom: 3px; }
+.rx-desc { font-size: 12px; color: var(--text-2); line-height: 1.5; }
+
+/* Ask doctor */
+.ask-row {
+  background: var(--blue-bg); border: 1px solid rgba(29,78,216,.1);
+  border-radius: 16px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px; cursor: pointer; margin-bottom: 0;
+}
+.ask-icon { width: 36px; height: 36px; border-radius: 10px; background: #DBEAFE; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.ask-text { flex: 1; }
+.ask-title { font-size: 13px; font-weight: 700; color: var(--blue); }
+.ask-sub { font-size: 11px; color: rgba(29,78,216,.55); margin-top: 2px; }
+.ask-arr { font-size: 18px; color: rgba(29,78,216,.35); }
+
+/* SAVE fixed bottom */
+.diag-fixed-bottom {
+  position: sticky; bottom: 0; z-index: 10;
+  background: rgba(249,246,239,.96); backdrop-filter: blur(18px);
+  border-top: 1px solid rgba(21,46,30,.07);
+  padding: 14px 16px 34px;
+}
+.save-btn {
+  width: 100%; padding: 18px 20px; border: none; border-radius: 22px;
+  background: var(--forest); color: #fff; font-size: 16px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: 0 8px 28px rgba(21,46,30,.32); cursor: pointer; letter-spacing: .01em;
+}
+.save-btn-sub { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.5); margin-top: 4px; text-align: center; }
+
+/* ── DIFF NOTES ── */
+.diff-note {
+  width: 390px; background: rgba(21,46,30,.05); border: 1px dashed rgba(21,46,30,.18);
+  border-radius: 14px; padding: 14px 16px; font-size: 12px; color: var(--text-2); line-height: 1.6;
+}
+.diff-note strong { color: var(--forest); font-weight: 800; }
+.diff-note ul { padding-left: 16px; margin-top: 4px; }
+.diff-note li { margin-bottom: 3px; }
+.checklist {
+  width: 390px; background: #fff; border: 1px solid rgba(21,46,30,.1);
+  border-radius: 14px; padding: 16px; font-size: 12px; color: var(--text-1); line-height: 1.7;
+  box-shadow: var(--sh1);
+}
+.checklist strong { font-size: 13px; font-weight: 800; color: var(--forest); display: block; margin-bottom: 6px; }
+.checklist .section { font-weight: 800; color: var(--text-2); margin-top: 8px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <button class="active" onclick="show('home',this)">🏠 首页</button>
+  <button onclick="show('detail',this)">🌿 植物档案</button>
+  <button onclick="show('diagnosis',this)">🔬 诊断报告</button>
+</div>
+
+<!-- ════════════════════════════════
+     PAGE 1 · HOME
+════════════════════════════════ -->
+<div class="diff-note" id="dn-home">
+  <strong>v2 vs v1 改动：首页</strong>
+  <ul>
+    <li>健康 Hero 移至深绿沉浸顶部，与背景融为一体（不再是独立卡片）</li>
+    <li>今日任务改为左侧彩色竖线 + 超期/紧急标签，视觉优先级更清晰</li>
+    <li>植物横滚改为底部颜色条 → 改为顶部植物图片占主导，名称+状态文字</li>
+    <li>AI Brief 更聚焦、更短，突出"今日建议"而非 banner 感</li>
+    <li>整体：深绿沉浸区 → cream 圆角过渡区，层次更强</li>
+  </ul>
+</div>
+
+<div class="phone active" id="home">
+  <!-- dark hero area -->
+  <div class="home-bg">
+    <div class="status-bar">
+      <div class="status-time">14:30</div>
+      <div class="status-icons">
+        <div class="status-dot"></div><div class="status-dot"></div><div class="status-dot"></div>
+      </div>
+    </div>
+    <div class="home-hero">
+      <div class="home-date">Saturday · Jun 14, 2026</div>
+      <div class="home-title">Plant<br>Health Today</div>
+      <div class="home-sub">3 株需要你今天关注</div>
+    </div>
+    <div class="garden-card">
+      <div class="gcard-ring">
+        <svg viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="2.8"/>
+          <circle cx="18" cy="18" r="14" fill="none" stroke="#4CAF7A" stroke-width="2.8"
+            stroke-dasharray="61 39" stroke-dashoffset="14"
+            stroke-linecap="round" transform="rotate(-90 18 18)"/>
+        </svg>
+        <div class="gcard-ring-inner">
+          <div class="gcard-score">78</div>
+          <div class="gcard-score-label">Health</div>
+        </div>
+      </div>
+      <div class="gcard-stats">
+        <div class="gcard-title">Garden Status</div>
+        <div class="gstat-row"><div class="gstat-dot r"></div><div class="gstat-label">需要立即浇水</div><div class="gstat-count">2</div></div>
+        <div class="gstat-row"><div class="gstat-dot a"></div><div class="gstat-label">施肥窗口期</div><div class="gstat-count">1</div></div>
+        <div class="gstat-row"><div class="gstat-dot g"></div><div class="gstat-label">状态良好</div><div class="gstat-count">2</div></div>
+      </div>
+    </div>
+    <div style="height:28px;background:linear-gradient(170deg,#152E1E,#1E4029,#2D5C3E)"></div>
+  </div>
+
+  <!-- cream body -->
+  <div class="home-body scrollable">
+    <!-- Today Tasks -->
+    <div class="tasks-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="caps">今日任务</div>
+        <div style="font-size:11px;font-weight:700;color:var(--forest-mid)">2 项</div>
+      </div>
+      <div class="task-card urgent">
+        <div class="task-urgency-stripe r"></div>
+        <div class="task-avatar r">🌿</div>
+        <div class="task-info">
+          <div class="task-plant-name">小绿</div>
+          <div class="task-type">龟背竹 · 需要浇水</div>
+        </div>
+        <div class="task-badge r">超期 3 天</div>
+      </div>
+      <div class="task-card warn">
+        <div class="task-urgency-stripe a"></div>
+        <div class="task-avatar a">🪴</div>
+        <div class="task-info">
+          <div class="task-plant-name">吊兰</div>
+          <div class="task-type">吊兰 · 施肥窗口期</div>
+        </div>
+        <div class="task-badge a">今天到期</div>
+      </div>
+    </div>
+
+    <!-- Plants -->
+    <div class="plants-row-wrap">
+      <div class="plants-row-header">
+        <div class="caps">我的植物 (5)</div>
+        <div class="plants-row-link">查看全部</div>
+      </div>
+      <div class="plants-row">
+        <div class="pcard">
+          <div class="pcard-photo" style="background:linear-gradient(135deg,#C8E6C9,#81C784)">
+            🌿
+            <div class="pcard-health-stripe" style="background:#F87171"></div>
+          </div>
+          <div class="pcard-info"><div class="pcard-name">小绿</div><div class="pcard-status" style="color:#C53030">需浇水</div></div>
+        </div>
+        <div class="pcard">
+          <div class="pcard-photo" style="background:linear-gradient(135deg,#DCEDC8,#AED581)">
+            🌱
+            <div class="pcard-health-stripe" style="background:#4CAF7A"></div>
+          </div>
+          <div class="pcard-info"><div class="pcard-name">琴叶榕</div><div class="pcard-status" style="color:#15803D">良好</div></div>
+        </div>
+        <div class="pcard">
+          <div class="pcard-photo" style="background:linear-gradient(135deg,#B2DFDB,#80CBC4)">
+            🪴
+            <div class="pcard-health-stripe" style="background:#FBBF24"></div>
+          </div>
+          <div class="pcard-info"><div class="pcard-name">吊兰</div><div class="pcard-status" style="color:var(--amber)">施肥</div></div>
+        </div>
+        <div class="pcard">
+          <div class="pcard-photo" style="background:linear-gradient(135deg,#F0F4C3,#DCE775)">
+            🌾
+            <div class="pcard-health-stripe" style="background:#4CAF7A"></div>
+          </div>
+          <div class="pcard-info"><div class="pcard-name">芦荟</div><div class="pcard-status" style="color:#15803D">良好</div></div>
+        </div>
+        <div class="pcard-add"><div class="pcard-add-icon">+</div><div class="pcard-add-text">添加</div></div>
+      </div>
+    </div>
+
+    <!-- AI Brief -->
+    <div class="ai-brief">
+      <div class="ai-brief-top"><div class="ai-live-dot"></div><div class="ai-brief-label">AI · 今日简报</div></div>
+      <div class="ai-brief-body">小绿已超期 3 天，叶片可能出现卷曲。今日空气湿度偏低，建议完成浇水后检查叶尖状态。</div>
+      <div class="ai-brief-foot">基于你的 5 株植物 · 今天 14:00 更新</div>
+    </div>
+
+    <!-- Recent -->
+    <div class="recent-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="caps">最近诊断</div>
+        <div class="plants-row-link">全部记录</div>
+      </div>
+      <div class="ritem">
+        <div class="ritem-img" style="background:linear-gradient(135deg,#C8E6C9,#81C784)">🌿</div>
+        <div class="ritem-info"><div class="ritem-name">龟背竹</div><div class="ritem-sub">3 天前 · 叶片状态良好</div></div>
+        <div class="rpill g">88分</div>
+      </div>
+      <div class="ritem">
+        <div class="ritem-img" style="background:linear-gradient(135deg,#FFECB3,#FFD54F)">🌱</div>
+        <div class="ritem-info"><div class="ritem-name">琴叶榕</div><div class="ritem-sub">1 周前 · 叶尖轻微焦边</div></div>
+        <div class="rpill a">62分</div>
+      </div>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+
+  <div class="bnav">
+    <div class="bni on"><div class="bni-icon">🏠</div><div class="bni-lbl">首页</div><div class="bni-pip"></div></div>
+    <div class="bni"><div class="bni-icon">🔬</div><div class="bni-lbl">诊断</div></div>
+    <div class="bni"><div class="bni-icon">🪴</div><div class="bni-lbl">植物</div></div>
+    <div class="bni"><div class="bni-icon">👤</div><div class="bni-lbl">我的</div></div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════
+     PAGE 2 · PLANT DETAIL
+════════════════════════════════ -->
+<div class="diff-note" id="dn-detail">
+  <strong>v2 vs v1 改动：植物档案</strong>
+  <ul>
+    <li>Hero 增大至 280px，植物名更大（32px），健康分 bubble 增加进度条</li>
+    <li>三核心指标顶部颜色条区分红/黄/绿，比 v1 更快扫描</li>
+    <li>Last Report 改为独立大卡片，左绿边线 + 大分数数字 + 状态文字，取代 v1 的摘要小卡</li>
+    <li>成长日志时间线图片更大 (148px)，左侧时间轴线更清晰</li>
+  </ul>
+</div>
+
+<div class="phone" id="detail">
+  <div class="detail-hero">
+    <div class="detail-hero-plant">🌿</div>
+    <div class="detail-hero-grad"></div>
+    <div class="detail-back">←</div>
+    <div class="detail-hero-bottom">
+      <div>
+        <div class="detail-name">小绿</div>
+        <div class="detail-species">Monstera deliciosa</div>
+        <div class="detail-since">入馆于 2024.03.15</div>
+      </div>
+      <div class="detail-score-bubble">
+        <div class="detail-score-num">78</div>
+        <div class="detail-score-ring"><div class="detail-score-ring-fill" style="width:78%"></div></div>
+        <div class="detail-score-tag">FAIR</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail-body">
+    <!-- 3 Metrics -->
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-top-stripe" style="background:var(--red)"></div>
+        <div class="metric-emoji">💧</div>
+        <div class="metric-val r">超期 3 天</div>
+        <div class="metric-key">浇水</div>
+        <div class="metric-mini-bar"><div class="metric-mini-fill mmf-r"></div></div>
+      </div>
+      <div class="metric">
+        <div class="metric-top-stripe" style="background:#FBBF24"></div>
+        <div class="metric-emoji">🌿</div>
+        <div class="metric-val a">2 天后</div>
+        <div class="metric-key">施肥</div>
+        <div class="metric-mini-bar"><div class="metric-mini-fill mmf-a"></div></div>
+      </div>
+      <div class="metric">
+        <div class="metric-top-stripe" style="background:#4CAF7A"></div>
+        <div class="metric-emoji">🔬</div>
+        <div class="metric-val g" style="font-size:13px">3 天前</div>
+        <div class="metric-key">诊断</div>
+        <div class="metric-mini-bar"><div class="metric-mini-fill mmf-g"></div></div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <button class="primary-cta">💧 立即记录浇水</button>
+    <div class="secondary-row">
+      <button class="secondary-btn">📸 拍照复查</button>
+      <button class="secondary-btn">🌿 记录施肥</button>
+    </div>
+
+    <!-- Last Report -->
+    <div class="caps" style="margin-bottom:10px">最近一次健康报告</div>
+    <div class="last-report">
+      <div class="lrep-header">
+        <div class="lrep-badge">
+          <div class="lrep-icon-wrap">🌿</div>
+          <div class="lrep-badge-text">状态良好</div>
+        </div>
+        <div class="lrep-date">3 天前</div>
+      </div>
+      <div class="lrep-score-row">
+        <div class="lrep-score-big">88</div>
+        <div class="lrep-score-sub">
+          <div class="lrep-score-status">Healthy · /100</div>
+          <div class="lrep-score-plant">AI 置信度 92%</div>
+        </div>
+      </div>
+      <div class="lrep-text">叶片颜色饱满，光照充足，整体状态良好。建议适当提高空气湿度，注意叶尖水分补给。</div>
+      <div class="lrep-cta">查看完整报告 →</div>
+    </div>
+
+    <!-- Growth Journal -->
+    <div class="journal-header">
+      <div class="caps">成长日志</div>
+      <div class="plants-row-link">+ 打卡</div>
+    </div>
+    <div class="journal-list">
+      <div class="jentry">
+        <div class="jentry-left"><div class="jentry-dot">📷</div><div class="jentry-line"></div></div>
+        <div class="jentry-content">
+          <div class="jentry-img" style="background:linear-gradient(135deg,#C8E6C9,#A5D6A7)">🌿</div>
+          <div class="jentry-meta">Jun 12 · 2 天前</div>
+          <div class="jentry-note">叶片展开，新叶透亮</div>
+        </div>
+      </div>
+      <div class="jentry">
+        <div class="jentry-left"><div class="jentry-dot">💧</div></div>
+        <div class="jentry-content">
+          <div class="jentry-img" style="background:linear-gradient(135deg,#B3E5FC,#4FC3F7)">💧</div>
+          <div class="jentry-meta">Jun 10 · 4 天前</div>
+          <div class="jentry-note">浇水打卡，土壤保持适度湿润</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════
+     PAGE 3 · DIAGNOSIS REPORT
+════════════════════════════════ -->
+<div class="diff-note" id="dn-diag">
+  <strong>v2 vs v1 改动：诊断报告</strong>
+  <ul>
+    <li>增加"严重程度"颜色进度条，在摘要下方一眼可知本次诊断风险等级</li>
+    <li>健康评分圆环更大 (108px)，数字更粗 (36px)，深绿 Hero 区域加大</li>
+    <li>处方笺每条增加标题 + 描述两层信息，而不是 v1 的单行 tip</li>
+    <li>保存按钮字体更大 (16px)、更粗 (900)、圆角更大 (22px)、阴影更重，明确作为关键动作</li>
+    <li>"问医生" 从文字链接改为独立蓝色卡片，保留追问入口不消失</li>
+  </ul>
+</div>
+
+<div class="phone" id="diagnosis">
+  <div class="diag-header-bar">
+    <div class="dback">←</div>
+    <div class="dtitle">植物诊断报告</div>
+    <div class="ddate">Jun 14, 2026</div>
+  </div>
+
+  <div class="diag-body">
+    <!-- Patient -->
+    <div class="patient-row">
+      <div class="patient-photo" style="background:linear-gradient(135deg,#C8E6C9,#81C784)">🌿</div>
+      <div class="patient-details">
+        <div class="patient-name">龟背竹</div>
+        <div class="patient-species">Monstera deliciosa</div>
+        <div class="patient-time">检查时间 · 2026.06.14  14:30</div>
+      </div>
+      <div class="patient-tag">Report</div>
+    </div>
+
+    <!-- Score Hero -->
+    <div class="score-hero-wrap">
+      <div class="score-ring-outer">
+        <svg viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"/>
+          <circle cx="18" cy="18" r="14" fill="none" stroke="#4CAF7A" stroke-width="3"
+            stroke-dasharray="78.5 21.5" stroke-dashoffset="14"
+            stroke-linecap="round" transform="rotate(-90 18 18)"/>
+        </svg>
+        <div class="score-ring-center">
+          <div class="score-hero-num">88</div>
+          <div class="score-hero-denom">/100</div>
+        </div>
+      </div>
+      <div class="score-hero-status">状态良好 · Healthy</div>
+      <div class="score-hero-species">Monstera deliciosa</div>
+      <div class="conf-pill"><div class="conf-dot"></div><div class="conf-label">AI 识别置信度 92%</div></div>
+    </div>
+
+    <!-- Summary + Severity -->
+    <div class="diag-summary">
+      <div class="block-label">诊断摘要</div>
+      <div class="summary-text">这株龟背竹整体状态良好，叶片颜色饱满、光泽度高。当前最需关注叶尖轻微焦边问题，由空气湿度偏低引起。</div>
+      <div style="margin-top:14px">
+        <div class="severity-row">
+          <div class="severity-label">严重程度</div>
+          <div class="severity-track"><div class="severity-fill"></div></div>
+          <div class="severity-val">轻微</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issues -->
+    <div class="issues-section">
+      <div class="block-label" style="margin-bottom:8px">⚠ 发现问题</div>
+      <div class="issue-item">
+        <div class="issue-icon">⚠️</div>
+        <div class="issue-text">叶尖轻微焦边，与空气湿度偏低（当前约 45%）有关，建议改善环境湿度</div>
+      </div>
+    </div>
+
+    <!-- Prescription -->
+    <div class="rx-section">
+      <div class="rx-header-row">
+        <div class="rx-icon-bg">📋</div>
+        <div class="block-label" style="margin-bottom:0">养护处方</div>
+      </div>
+      <div class="rx-item">
+        <div class="rx-num">1</div>
+        <div class="rx-body">
+          <div class="rx-title">减少直射光照</div>
+          <div class="rx-desc">移至散射光区域，避免夏季正午强光直晒导致叶片灼伤、失水加剧。</div>
+        </div>
+      </div>
+      <div class="rx-item">
+        <div class="rx-num">2</div>
+        <div class="rx-body">
+          <div class="rx-title">提高环境湿度至 60%+</div>
+          <div class="rx-desc">可使用加湿器，或在盆土周围放置水盘蒸发补湿，每天喷雾叶面 1 次。</div>
+        </div>
+      </div>
+      <div class="rx-item">
+        <div class="rx-num">3</div>
+        <div class="rx-body">
+          <div class="rx-title">每周检查土壤湿度</div>
+          <div class="rx-desc">手指插入土壤至第二节感受湿度，干燥时再浇水，避免积水烂根。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ask Doctor -->
+    <div class="ask-row">
+      <div class="ask-icon">💬</div>
+      <div class="ask-text">
+        <div class="ask-title">有疑问？问植物医生</div>
+        <div class="ask-sub">继续追问关于这株植物的任何问题</div>
+      </div>
+      <div class="ask-arr">›</div>
+    </div>
+  </div>
+
+  <!-- Fixed Save -->
+  <div class="diag-fixed-bottom">
+    <button class="save-btn">🌿 保存到小绿的健康档案</button>
+    <div class="save-btn-sub">保存后可在植物详情页查看此报告</div>
+  </div>
+</div>
+
+
+<!-- PM CHECKLIST -->
+<div class="checklist">
+  <strong>PM Review v2 Checklist</strong>
+  <div class="section">首页</div>
+  □ 深绿沉浸 Hero + cream 圆角过渡，是否比 v1 更有质感<br>
+  □ 健康圆环与统计数字并排，是否"一眼看懂整体状态"<br>
+  □ 今日任务左竖线 + 超期标签，是否比 v1 更像健康提醒<br>
+  □ 植物横滚图片 + 顶部颜色条，是否比 v1 更直观<br>
+  <div class="section">植物档案</div>
+  □ 三指标顶部彩色条，是否比 v1 更快速扫描到状态<br>
+  □ Last Report 大卡片（左绿线 + 36px 分数），是否比 v1 摘要更有档案感<br>
+  □ 大 CTA 按钮 + 次级按钮行，操作层级是否足够清晰<br>
+  <div class="section">诊断报告</div>
+  □ 严重程度颜色进度条，是否有效传达风险等级<br>
+  □ 处方笺 标题+描述 双层，是否比 v1 单行更有可执行感<br>
+  □ 保存按钮大圆角 + 重阴影，是否第一眼识别为关键动作<br>
+  □ 问医生独立蓝色卡片，是否保留了追问入口的可见性<br>
+  <div class="section">整体</div>
+  □ 奶油哑光 + 深森林绿，是否比 v1 更统一<br>
+  □ 整体感：是否接近"AI Plant Health Journal"定位
+</div>
+
+<script>
+const diffIds = { home:'dn-home', detail:'dn-detail', diagnosis:'dn-diag' };
+function show(id, btn) {
+  document.querySelectorAll('.phone').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  document.querySelectorAll('.diff-note').forEach(d => d.style.display = 'none');
+  const el = document.getElementById(diffIds[id]);
+  if (el) el.style.display = 'block';
+}
+document.querySelectorAll('.diff-note').forEach((d,i) => { if(i > 0) d.style.display='none'; });
+</script>
+</body>
+</html>

@@ -10,8 +10,8 @@ export default function EditPlantPage() {
   const router = useRouter();
   const plantId = params.id as string;
 
-  const plant = usePlantStore((s) => s.plants[plantId]);
-  const updatePlant = usePlantStore((s) => s.updatePlant);
+  const { plants, updatePlant } = usePlantStore();
+  const plant = plants[plantId];
 
   const [name, setName] = useState(plant?.name || "");
   const [species, setSpecies] = useState(plant?.species || "");

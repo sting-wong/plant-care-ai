@@ -18,7 +18,6 @@ const COMMON_PLANTS = [
   { name: "仙人掌", species: "Cactaceae", waterDays: 21, fertDays: 45 },
 ];
 
-// Mock AI 识别（后续替换为真实 API）
 async function mockIdentifyPlant(): Promise<(typeof COMMON_PLANTS)[number]> {
   await new Promise((r) => setTimeout(r, 1500));
   return COMMON_PLANTS[Math.floor(Math.random() * COMMON_PLANTS.length)];
@@ -26,7 +25,7 @@ async function mockIdentifyPlant(): Promise<(typeof COMMON_PLANTS)[number]> {
 
 export default function AddPlantPage() {
   return (
-    <Suspense fallback={<div className="min-h-dvh flex items-center justify-center"><div className="skeleton w-32 h-8" /></div>}>
+    <Suspense fallback={<div className="glass-bg min-h-dvh flex items-center justify-center"><Loader2 className="w-6 h-6 text-[#2D7D46] animate-spin" /></div>}>
       <AddPlantForm />
     </Suspense>
   );
@@ -35,7 +34,7 @@ export default function AddPlantPage() {
 function AddPlantForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const addPlant = usePlantStore((s) => s.addPlant);
+  const { addPlant } = usePlantStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
@@ -47,13 +46,12 @@ function AddPlantForm() {
   const [fertilizingDays, setFertilizingDays] = useState(30);
   const [notes, setNotes] = useState("");
   const [isIdentifying, setIsIdentifying] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // 从 URL 参数自动填充品种名
   useEffect(() => {
     const speciesParam = searchParams.get("species");
     if (speciesParam) {
       setSpecies(speciesParam);
-      // 根据品种名设置推荐浇水周期
       const plantInfo = COMMON_PLANTS.find((p) => p.name === speciesParam);
       if (plantInfo) {
         setWateringDays(plantInfo.waterDays);
@@ -67,8 +65,6 @@ function AddPlantForm() {
     if (!file) return;
     const { base64 } = await compressImage(file);
     setImageBase64(base64);
-
-    // 自动 AI 识别
     setIsIdentifying(true);
     try {
       const result = await mockIdentifyPlant();
@@ -91,7 +87,6 @@ function AddPlantForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !imageBase64) return;
-
     addPlant({
       id: nanoid(10),
       name,
@@ -105,67 +100,66 @@ function AddPlantForm() {
       lastFertilizedAt: Date.now(),
       createdAt: Date.now(),
       notes,
+      health: "healthy",
+      lastDiagnosisAt: null,
+      lastDiagnosisSummary: "",
     });
-
     router.push("/plants");
   };
 
+  const inputClass = "w-full bg-white/40 backdrop-blur-sm border border-white/50 rounded-2xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#2D7D46]/20 focus:border-[#2D7D46]/40 placeholder:text-[#6B7B6B]/60 text-[#1A2E1A]";
+
   return (
-    <main className="min-h-dvh bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+    <main className="glass-bg min-h-dvh">
+      <header className="sticky top-0 z-10 glass-panel border-b border-white/30 px-4 py-3 flex items-center gap-3">
         <button
+          aria-label="返回"
           onClick={() => router.back()}
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/30 transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <ArrowLeft className="w-5 h-5 text-[#1A2E1A]" />
         </button>
-        <h1 className="font-medium text-gray-900">添加植物</h1>
+        <h1 className="font-medium text-[#1A2E1A]">添加植物</h1>
       </header>
 
-      <form onSubmit={handleSubmit} className="px-4 py-6 space-y-6">
-        {/* 照片 + AI 识别 */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            植物照片 *
-          </label>
-          <div className="flex items-end gap-4">
-            {imageBase64 ? (
-              <div
-                className="relative w-28 h-28 rounded-full overflow-hidden cursor-pointer border-2 border-green-200"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <img
-                  src={imageBase64}
-                  alt="植物"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                  <Camera className="w-6 h-6 text-white" />
-                </div>
+      <form onSubmit={handleSubmit} className="px-4 py-5 space-y-5 pb-10">
+        {/* 照片上传 */}
+        <div className="flex flex-col items-center gap-3 pt-2">
+          {imageBase64 ? (
+            <button
+              type="button"
+              aria-label="更换植物照片"
+              onClick={() => fileInputRef.current?.click()}
+              className="relative w-28 h-28 rounded-full overflow-hidden ring-4 ring-white/60 shadow-lg"
+            >
+              <img src={imageBase64} alt="植物" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                <Camera className="w-6 h-6 text-white" />
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-28 h-28 rounded-full border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5 text-gray-400 hover:border-green-300 hover:text-green-500 transition-colors"
-              >
-                <ImagePlus className="w-6 h-6" />
-                <span className="text-[10px]">添加照片</span>
-              </button>
-            )}
-            {isIdentifying && (
-              <div className="flex items-center gap-2 text-sm text-green-600">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>AI 识别中...</span>
-              </div>
-            )}
-            {imageBase64 && !isIdentifying && species && (
-              <div className="flex items-center gap-1.5 text-sm text-green-600">
-                <Sparkles className="w-4 h-4" />
-                <span>已识别为 {COMMON_PLANTS.find(p => p.species === species)?.name || species}</span>
-              </div>
-            )}
-          </div>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="glass-dark w-28 h-28 rounded-full flex flex-col items-center justify-center gap-1.5 text-[#2D7D46]"
+              aria-label="添加植物照片"
+            >
+              <ImagePlus className="w-7 h-7" />
+              <span className="text-[10px] font-medium">添加照片</span>
+            </button>
+          )}
+          {isIdentifying && (
+            <div className="flex items-center gap-2 text-sm text-[#2D7D46]">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>AI 识别中...</span>
+            </div>
+          )}
+          {imageBase64 && !isIdentifying && species && (
+            <div className="flex items-center gap-1.5 text-sm text-[#2D7D46]">
+              <Sparkles className="w-4 h-4" />
+              <span>已识别为 {COMMON_PLANTS.find((p) => p.species === species)?.name || species}</span>
+            </div>
+          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -176,148 +170,132 @@ function AddPlantForm() {
           />
         </div>
 
-        {/* 名称 */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            给它起个名字 *
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="比如：小绿、胖胖、客厅龟背竹"
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-300"
-          />
-        </div>
-
-        {/* 品种 */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            品种
-          </label>
-          <div className="flex flex-wrap gap-2 mb-2">
-            {COMMON_PLANTS.map((p) => (
-              <button
-                key={p.name}
-                type="button"
-                onClick={() => handleQuickSelect(p)}
-                className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
-                  species === p.species
-                    ? "bg-green-50 border-green-300 text-green-700"
-                    : "bg-white border-gray-200 text-gray-600 hover:border-green-200"
-                }`}
-              >
-                {p.name}
-              </button>
-            ))}
+        {/* 核心字段 */}
+        <div className="glass-card px-5 py-4 space-y-4">
+          <div>
+            <label className="text-xs font-medium text-[#6B7B6B] mb-1.5 block">给它起个名字 *</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="比如：小绿、胖胖、客厅龟背竹"
+              className={inputClass}
+            />
           </div>
-          <input
-            type="text"
-            value={species}
-            onChange={(e) => setSpecies(e.target.value)}
-            placeholder="或手动输入品种名"
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-300"
-          />
-        </div>
 
-        {/* 摆放位置 */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            摆放位置
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {(Object.entries(LOCATION_LABELS) as [PlantLocation, string][]).map(
-              ([key, label]) => (
+          <div>
+            <label className="text-xs font-medium text-[#6B7B6B] mb-1.5 block">品种</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {COMMON_PLANTS.map((p) => (
+                <button
+                  key={p.name}
+                  type="button"
+                  onClick={() => handleQuickSelect(p)}
+                  className={`chip ${species === p.species ? "chip-active" : ""}`}
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={species}
+              onChange={(e) => setSpecies(e.target.value)}
+              placeholder="或手动输入品种名"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-[#6B7B6B] mb-1.5 block">摆放位置</label>
+            <div className="flex flex-wrap gap-2">
+              {(Object.entries(LOCATION_LABELS) as [PlantLocation, string][]).map(([key, label]) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setLocation(key)}
-                  className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${
-                    location === key
-                      ? "bg-green-50 border-green-300 text-green-700"
-                      : "bg-white border-gray-200 text-gray-600 hover:border-green-200"
-                  }`}
+                  className={`chip ${location === key ? "chip-active" : ""}`}
                 >
                   {label}
                 </button>
-              )
-            )}
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-[#6B7B6B] mb-1 block">
+              浇水周期
+              <span className="text-[#6B7B6B]/60 font-normal ml-1">AI 已推荐</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-[#6B7B6B]">每</span>
+              <input
+                type="number"
+                min={1}
+                max={60}
+                value={wateringDays}
+                onChange={(e) => setWateringDays(Number(e.target.value))}
+                className="w-16 bg-white/40 border border-white/50 rounded-xl px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-[#2D7D46]/20"
+              />
+              <span className="text-sm text-[#6B7B6B]">天浇一次水</span>
+            </div>
           </div>
         </div>
 
-        {/* 入手日期 */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            入手日期（可选）
-          </label>
-          <input
-            type="date"
-            value={acquiredAt}
-            onChange={(e) => setAcquiredAt(e.target.value)}
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-300"
-          />
-        </div>
+        {/* 高级设置折叠 */}
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((v) => !v)}
+          className="w-full text-xs text-[#6B7B6B] flex items-center justify-center gap-1 py-1"
+        >
+          {showAdvanced ? "收起" : "高级设置（施肥、入手日期、备注）"}
+        </button>
 
-        {/* 浇水周期 */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            浇水周期
-            <span className="text-xs text-gray-400 font-normal ml-2">
-              AI 已根据品种推荐
-            </span>
-          </label>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">每</span>
-            <input
-              type="number"
-              min={1}
-              max={60}
-              value={wateringDays}
-              onChange={(e) => setWateringDays(Number(e.target.value))}
-              className="w-16 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-300"
-            />
-            <span className="text-sm text-gray-500">天浇一次水</span>
+        {showAdvanced && (
+          <div className="glass-card px-5 py-4 space-y-4">
+            <div>
+              <label className="text-xs font-medium text-[#6B7B6B] mb-1 block">施肥周期</label>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-[#6B7B6B]">每</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={fertilizingDays}
+                  onChange={(e) => setFertilizingDays(Number(e.target.value))}
+                  className="w-16 bg-white/40 border border-white/50 rounded-xl px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-[#2D7D46]/20"
+                />
+                <span className="text-sm text-[#6B7B6B]">天施一次肥</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-[#6B7B6B] mb-1.5 block">入手日期（可选）</label>
+              <input
+                type="date"
+                value={acquiredAt}
+                onChange={(e) => setAcquiredAt(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-[#6B7B6B] mb-1.5 block">备注</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="其他想记录的信息..."
+                rows={3}
+                className={`${inputClass} resize-none`}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* 施肥周期 */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            施肥周期
-          </label>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">每</span>
-            <input
-              type="number"
-              min={1}
-              max={120}
-              value={fertilizingDays}
-              onChange={(e) => setFertilizingDays(Number(e.target.value))}
-              className="w-16 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-center outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-300"
-            />
-            <span className="text-sm text-gray-500">天施一次肥</span>
-          </div>
-        </div>
-
-        {/* 备注 */}
-        <div>
-          <label className="text-sm font-medium text-gray-700 mb-2 block">
-            备注
-          </label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="其他想记录的信息..."
-            rows={3}
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-300 resize-none"
-          />
-        </div>
-
-        {/* 提交 */}
         <button
           type="submit"
           disabled={!name || !imageBase64}
-          className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white rounded-xl py-3.5 font-medium transition-colors"
+          className="w-full bg-[#2D7D46] hover:bg-[#246838] disabled:bg-gray-300 disabled:shadow-none text-white rounded-3xl py-4 font-medium transition-colors shadow-lg shadow-green-700/20 press-effect"
         >
           添加植物
         </button>

@@ -131,9 +131,7 @@ function ReminderRow({
 }
 
 export default function RemindersPage() {
-  const plants = usePlantStore((s) => s.plants);
-  const waterPlant = usePlantStore((s) => s.waterPlant);
-  const fertilizePlant = usePlantStore((s) => s.fertilizePlant);
+  const { plants, waterPlant, fertilizePlant } = usePlantStore();
 
   const [notificationPermission, setNotificationPermission] = useState<
     NotificationPermission | "unsupported"

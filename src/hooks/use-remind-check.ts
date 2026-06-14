@@ -8,7 +8,7 @@ import { usePlantStore } from "@/lib/store";
  * 在 layout 中使用，每次页面可见时检查一次
  */
 export function useRemindCheck() {
-  const plants = usePlantStore((s) => s.plants);
+  const { plants } = usePlantStore();
 
   useEffect(() => {
     const checkReminders = () => {

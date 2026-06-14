@@ -219,3 +219,314 @@ select {
   from { transform: translateX(20px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+/* ===== Glass UI v1 ===== */
+
+.glass-bg {
+  background: linear-gradient(145deg, #F5F7F2 0%, #EEF2ED 40%, #E8EDE5 100%);
+  min-height: 100dvh;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 24px;
+  box-shadow: 0 4px 24px rgba(45, 90, 50, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.glass-dark {
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  border-radius: 24px;
+  box-shadow: 0 4px 24px rgba(45, 90, 50, 0.10);
+}
+
+.glass-amber {
+  background: rgba(245, 166, 35, 0.10);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(245, 166, 35, 0.26);
+  border-radius: 16px;
+}
+
+.glass-green {
+  background: rgba(45, 125, 70, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(45, 125, 70, 0.20);
+  border-radius: 16px;
+}
+
+.glass-panel {
+  background: rgba(240, 245, 238, 0.78);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.52);
+}
+
+/* 扫描线动画 */
+@keyframes scan {
+  0%   { top: 0%; opacity: 1; }
+  95%  { top: 100%; opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.9),
+    rgba(139, 195, 74, 0.8),
+    rgba(255, 255, 255, 0.9),
+    transparent
+  );
+  box-shadow: 0 0 8px rgba(139, 195, 74, 0.6);
+  animation: scan 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* 状态胶囊 */
+.status-pill-healthy {
+  background: rgba(45, 125, 70, 0.12);
+  border: 1px solid rgba(45, 125, 70, 0.30);
+  color: #1B5E30;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-pill-watch {
+  background: rgba(245, 166, 35, 0.12);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  color: #7A4A00;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-pill-urgent {
+  background: rgba(220, 38, 38, 0.10);
+  border: 1px solid rgba(220, 38, 38, 0.30);
+  color: #7F1D1D;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* 选择器 chip */
+.chip {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid rgba(45, 125, 70, 0.20);
+  background: rgba(255, 255, 255, 0.50);
+  color: #3A5A3A;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip-active {
+  background: rgba(45, 125, 70, 0.15);
+  border-color: rgba(45, 125, 70, 0.40);
+  color: #1B5E30;
+  font-weight: 500;
+}
+
+/* 圆形操作按钮 */
+.btn-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+}
+
+.btn-circle:active {
+  transform: scale(0.94);
+}
+
+/* 植物详情 hero 遮罩 */
+.hero-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.08) 0%,
+    rgba(0, 0, 0, 0.02) 30%,
+    rgba(0, 0, 0, 0.48) 78%,
+    rgba(0, 0, 0, 0.70) 100%
+  );
+}
+
+/* 诊断分析进度点 */
+.step-dot-pending  { width: 10px; height: 10px; border-radius: 50%; background: rgba(180, 180, 180, 0.40); }
+.step-dot-active   { width: 10px; height: 10px; border-radius: 50%; background: rgba(45, 125, 70, 0.80); box-shadow: 0 0 6px rgba(45, 125, 70, 0.5); }
+.step-dot-done     { width: 10px; height: 10px; border-radius: 50%; background: rgba(45, 125, 70, 1); }
+
+/* ===== Round 4B — Botanical Medical Journal ===== */
+
+:root {
+  --forest: #152E1E;
+  --forest-mid: #1E4029;
+  --forest-light: #2D5C3E;
+  --cream: #F9F6EF;
+  --blue-bg: #EEF4FF;
+}
+
+/* 首页深绿 Hero 区 */
+.hero-forest {
+  background: linear-gradient(160deg, var(--forest) 0%, var(--forest-mid) 55%, var(--forest-light) 100%);
+}
+
+/* 植物详情浮动健康分气泡 */
+.health-bubble {
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  padding: 12px 16px;
+}
+
+/* 植物详情顶部圆形操作按钮（返回/编辑/删除） */
+.detail-icon-btn {
+  border: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* 植物详情指标卡顶色条（3px 绝对定位） */
+.metric-card {
+  position: relative;
+  overflow: hidden;
+  background: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(21, 46, 30, 0.09);
+  border-radius: 18px;
+  padding: 14px 10px 12px;
+}
+
+.metric-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 16px 16px 0 0;
+}
+
+.metric-card-top-red::before    { background: #F87171; }
+.metric-card-top-amber::before  { background: #FBBF24; }
+.metric-card-top-green::before  { background: #4CAF7A; }
+
+/* 植物详情 Last Report 左边框卡片 */
+.report-card-accent {
+  background: rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-left: 4px solid #4CAF7A;
+  border-radius: 20px;
+  padding: 16px;
+}
+
+/* 植物详情主 CTA 按钮（拍照复查） */
+.cta-primary-forest {
+  background: var(--forest);
+  color: #ffffff;
+  font-weight: 800;
+  border-radius: 20px;
+  box-shadow: 0 8px 28px rgba(21, 46, 30, 0.28);
+  transition: opacity 0.15s;
+}
+
+.cta-primary-forest:active {
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
+/* 诊断页严重程度渐变条 */
+.severity-bar {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #4CAF7A 0%, #FBBF24 50%, #F87171 100%);
+}
+
+.severity-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* 诊断页保存按钮加重样式 */
+.save-btn-heavy {
+  font-weight: 900;
+  border-radius: 22px;
+  box-shadow: 0 8px 28px rgba(21, 46, 30, 0.32);
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.save-btn-heavy:active {
+  opacity: 0.88;
+  transform: scale(0.97);
+}
+
+/* 诊断页追问医生卡片 */
+.ask-doctor-card {
+  background: var(--blue-bg);
+  border: 1px solid rgba(99, 132, 255, 0.20);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+/* 首页今日任务卡（左色边框） */
+.task-card-urgent {
+  background: rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.40);
+  border-left: 3.5px solid #F87171;
+  border-radius: 16px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.task-card-warn {
+  background: rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.40);
+  border-left: 3.5px solid #FBBF24;
+  border-radius: 16px;
+  padding: 12px 14px;
+  cursor: pointer;
+}

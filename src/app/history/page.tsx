@@ -16,7 +16,7 @@ function formatDate(timestamp: number): string {
 
 export default function HistoryPage() {
   const router = useRouter();
-  const sessions = usePlantStore((s) => s.sessions);
+  const { sessions } = usePlantStore();
 
   const sessionList = Object.values(sessions)
     .filter((s) => s.diagnosis)
