@@ -33,7 +33,17 @@ export default function AddPlantPage() {
 function AddPlantForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addPlant } = usePlantStore();
+  const { addPlant, sessions } = usePlantStore();
+
+  // Carry over diagnosis result when navigating from /diagnosis?sessionId=
+  const diagSessionId = searchParams.get("sessionId");
+  const diagSession = diagSessionId ? sessions[diagSessionId] : null;
+  const diagConfidence = diagSession?.diagnosis?.confidence ?? null;
+  const initialHealth: "healthy" | "watch" | "urgent" =
+    diagConfidence === null ? "healthy"
+    : diagConfidence >= 0.8 ? "healthy"
+    : diagConfidence >= 0.5 ? "watch"
+    : "urgent";
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
@@ -99,7 +109,7 @@ function AddPlantForm() {
       lastFertilizedAt: Date.now(),
       createdAt: Date.now(),
       notes,
-      health: "healthy",
+      health: initialHealth,
       lastDiagnosisAt: null,
       lastDiagnosisSummary: "",
     });

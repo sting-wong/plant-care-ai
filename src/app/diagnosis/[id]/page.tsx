@@ -384,7 +384,7 @@ function DiagnosisPageInner() {
               </button>
             ) : (
               <button
-                onClick={() => router.push("/plants/add")}
+                onClick={() => router.push(`/plants/add?sessionId=${sessionId}`)}
                 className="cta-primary-forest w-full flex items-center justify-center gap-2 py-3.5 text-[15px]"
                 style={{ border: "none", WebkitAppearance: "none", cursor: "pointer" }}
               >

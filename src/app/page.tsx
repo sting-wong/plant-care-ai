@@ -55,10 +55,11 @@ export default function HomePage() {
   const watchCount = plantList.filter((p) => p.health === "watch").length;
   const urgentCount = plantList.filter((p) => p.health === "urgent").length;
 
-  // Garden health score: 100 minus 15 per overdue reminder, floored at 20
+  // Garden health score: overdue -15, watch -10, urgent -20, floored at 0
+  const healthPenalty = urgentCount * 20 + watchCount * 10;
   const gardenScore = plantList.length === 0
     ? 0
-    : Math.max(20, 100 - overdueCount * 15);
+    : Math.max(0, 100 - overdueCount * 15 - healthPenalty);
   const circumference = 2 * Math.PI * 38;
   const dashOffset = scoreToOffset(gardenScore);
 
