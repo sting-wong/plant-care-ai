@@ -6,25 +6,6 @@ import { ArrowLeft, ImagePlus, Camera } from "lucide-react";
 import { usePlantStore } from "@/lib/store";
 import { compressImage } from "@/lib/utils";
 
-function ScanCorners() {
-  return (
-    <svg
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      viewBox="0 0 256 256"
-      fill="none"
-    >
-      {/* 左上 */}
-      <path d="M20 56 L20 20 L56 20" stroke="white" strokeWidth="3" strokeLinecap="round" />
-      {/* 右上 */}
-      <path d="M200 20 L236 20 L236 56" stroke="white" strokeWidth="3" strokeLinecap="round" />
-      {/* 左下 */}
-      <path d="M20 200 L20 236 L56 236" stroke="white" strokeWidth="3" strokeLinecap="round" />
-      {/* 右下 */}
-      <path d="M200 236 L236 236 L236 200" stroke="white" strokeWidth="3" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export default function ScanPage() {
   const router = useRouter();
   const { createSession } = usePlantStore();
@@ -60,63 +41,50 @@ export default function ScanPage() {
   };
 
   return (
-    <main className="relative h-dvh overflow-hidden bg-[#1a2a1a]">
-      {/* 背景植物图 */}
-      <div
-        className="absolute inset-0 bg-cover bg-center scale-105"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=800&auto=format&fit=crop')",
-          filter: "blur(2px) brightness(0.55)",
-        }}
-      />
-
+    <main className="glass-bg min-h-dvh flex flex-col">
       {/* 顶部导航 */}
-      <header className="relative z-10 flex items-center justify-between px-5 pt-safe pt-4 pb-2">
+      <header className="glass-panel border-b border-white/30 px-4 py-3 flex items-center gap-3 safe-top shrink-0">
         <button
-          aria-label="关闭"
+          aria-label="返回"
           onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-white/15 backdrop-blur-sm"
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/30 transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-white" />
+          <ArrowLeft className="w-5 h-5 text-[#1A2E1A]" />
         </button>
-        <span className="text-white font-semibold text-base tracking-wide">Scan Your Plant</span>
-        <div className="w-10" />
+        <h1 className="font-medium text-[#1A2E1A]">拍照诊断</h1>
       </header>
 
-      {/* 扫描框 */}
-      <div className="relative z-10 flex flex-col items-center justify-center" style={{ marginTop: "8vh" }}>
-        <div className="relative w-64 h-64">
-          <ScanCorners />
-          <div className="scan-line" />
+      {/* 主体 */}
+      <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
+        {/* 说明文字 */}
+        <div className="text-center space-y-2">
+          <p className="text-xl font-semibold text-[#152E1E]">拍下植物照片</p>
+          <p className="text-sm text-[#6B7B6B]">AI 帮你看健康状态，给出养护建议</p>
         </div>
-        <p className="mt-6 text-white/65 text-xs tracking-wide">将植物置于框内，自动识别</p>
-      </div>
 
-      {/* 底部操作面板 */}
-      <div className="glass-panel absolute bottom-0 left-0 right-0 safe-bottom px-8 pt-7 pb-10">
-        <div className="flex items-center justify-around">
-          {/* 相册 */}
-          <button
-            aria-label="从相册选择"
-            onClick={openAlbum}
-            className="btn-circle glass-dark"
-          >
-            <ImagePlus className="w-6 h-6 text-[#2D7D46]" />
-          </button>
+        {/* 拍照主按钮 */}
+        <button
+          aria-label="拍照"
+          onClick={openCamera}
+          className="w-36 h-36 rounded-full bg-[#2D7D46] flex flex-col items-center justify-center gap-2 shadow-xl shadow-green-700/30 press-effect"
+        >
+          <Camera className="w-10 h-10 text-white" />
+          <span className="text-white text-sm font-medium">拍照</span>
+        </button>
 
-          {/* 拍照主按钮 */}
-          <button
-            aria-label="拍照"
-            onClick={openCamera}
-            className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-xl shadow-black/20 press-effect"
-          >
-            <Camera className="w-8 h-8 text-[#2D7D46]" />
-          </button>
+        {/* 次级：从相册选 */}
+        <button
+          aria-label="从相册选择"
+          onClick={openAlbum}
+          className="glass-dark flex items-center gap-2 px-6 py-3 rounded-2xl press-effect"
+        >
+          <ImagePlus className="w-5 h-5 text-[#2D7D46]" />
+          <span className="text-sm font-medium text-[#1A2E1A]">从相册选取</span>
+        </button>
 
-          {/* 占位（保持对称） */}
-          <div className="w-16 h-16" />
-        </div>
+        <p className="text-xs text-[#6B7B6B]/70 text-center px-4">
+          拍摄时确保光线充足，尽量包含叶片和茎部
+        </p>
       </div>
     </main>
   );

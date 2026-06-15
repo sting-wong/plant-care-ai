@@ -8,14 +8,13 @@ import { usePlantStore, LOCATION_LABELS, type PlantLocation } from "@/lib/store"
 import { compressImage } from "@/lib/utils";
 
 const COMMON_PLANTS = [
-  { name: "龟背竹", species: "Monstera deliciosa", waterDays: 7, fertDays: 30 },
-  { name: "绿萝", species: "Epipremnum aureum", waterDays: 5, fertDays: 21 },
-  { name: "多肉", species: "Echeveria sp.", waterDays: 12, fertDays: 30 },
-  { name: "琴叶榕", species: "Ficus lyrata", waterDays: 7, fertDays: 14 },
-  { name: "虎皮兰", species: "Sansevieria", waterDays: 14, fertDays: 30 },
-  { name: "吊兰", species: "Chlorophytum comosum", waterDays: 5, fertDays: 21 },
-  { name: "发财树", species: "Pachira aquatica", waterDays: 10, fertDays: 30 },
-  { name: "仙人掌", species: "Cactaceae", waterDays: 21, fertDays: 45 },
+  { name: "热带观叶", species: "Tropical Foliage", waterDays: 7, fertDays: 30 },
+  { name: "花叶观赏", species: "Ornamental Foliage", waterDays: 5, fertDays: 21 },
+  { name: "多肉/仙人掌", species: "Succulent & Cactus", waterDays: 14, fertDays: 45 },
+  { name: "蕨类", species: "Fern", waterDays: 3, fertDays: 21 },
+  { name: "兰科", species: "Orchidaceae", waterDays: 7, fertDays: 14 },
+  { name: "块根/球根", species: "Geophyte", waterDays: 10, fertDays: 30 },
+  { name: "大型绿植", species: "Large Foliage Plant", waterDays: 7, fertDays: 21 },
 ];
 
 async function mockIdentifyPlant(): Promise<(typeof COMMON_PLANTS)[number]> {
@@ -201,7 +200,7 @@ function AddPlantForm() {
               type="text"
               value={species}
               onChange={(e) => setSpecies(e.target.value)}
-              placeholder="或手动输入品种名"
+              placeholder="选择品类后可填写具体品种，如花烛、白锦龟背竹等"
               className={inputClass}
             />
           </div>
