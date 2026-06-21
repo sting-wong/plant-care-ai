@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { nanoid } from "nanoid";
@@ -71,12 +72,16 @@ export default function HomePage() {
   };
   void handleCapture;
 
-  const now = new Date();
-  const hour = now.getHours();
+  // 日期/问候必须在挂载后用真实时间渲染，否则预渲染会把构建时的日期烤进 HTML
+  const [now, setNow] = useState<Date | null>(null);
+  useEffect(() => {
+    setNow(new Date());
+  }, []);
+  const hour = now?.getHours() ?? 0;
   const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-  const dateLabel = `${month}月${day}日`;
+  const month = now ? now.getMonth() + 1 : null;
+  const day = now ? now.getDate() : null;
+  const dateLabel = now ? `${month}月${day}日` : "";
 
   const taskSubtitle =
     overdueCount > 0
@@ -92,8 +97,8 @@ export default function HomePage() {
       <div className="hero-forest">
         {/* 状态栏占位 + 问候 */}
         <div className="px-5 pt-14 pb-4">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-white/40 mb-1">
-            {timeGreeting} · {dateLabel}
+          <p className="text-[10px] font-bold tracking-widest uppercase text-white/40 mb-1 min-h-[14px]">
+            {now ? `${timeGreeting} · ${dateLabel}` : " "}
           </p>
           <h1 className="text-[26px] font-extrabold text-white leading-tight">我的植物花园</h1>
           <p className="text-[13px] text-white/55 mt-1">{taskSubtitle}</p>

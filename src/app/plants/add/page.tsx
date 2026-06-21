@@ -40,7 +40,10 @@ function AddPlantForm() {
   const diagSession = diagSessionId ? sessions[diagSessionId] : null;
   const diagConfidence = diagSession?.diagnosis?.confidence ?? null;
   const initialHealth: "healthy" | "watch" | "urgent" =
-    diagConfidence === null ? "healthy"
+    diagSession?.diagnosis?.healthStatus === "healthy" ? "healthy"
+    : diagSession?.diagnosis?.healthStatus === "critical" ? "urgent"
+    : diagSession?.diagnosis?.healthStatus === "needs_attention" ? "watch"
+    : diagConfidence === null ? "healthy"
     : diagConfidence >= 0.8 ? "healthy"
     : diagConfidence >= 0.5 ? "watch"
     : "urgent";
@@ -110,8 +113,8 @@ function AddPlantForm() {
       createdAt: Date.now(),
       notes,
       health: initialHealth,
-      lastDiagnosisAt: null,
-      lastDiagnosisSummary: "",
+      lastDiagnosisAt: diagSession?.diagnosis ? Date.now() : null,
+      lastDiagnosisSummary: diagSession?.diagnosis?.greeting?.slice(0, 60) || "",
     });
     router.push("/plants");
   };
@@ -173,7 +176,6 @@ function AddPlantForm() {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleImageSelect}
             className="hidden"
           />
